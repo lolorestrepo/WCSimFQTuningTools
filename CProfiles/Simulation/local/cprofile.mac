@@ -1,0 +1,8 @@
+/control/execute   ../templates/cprofile_base.mac
+
+/WCSim/random/seed 100
+/gun/particle      mu-
+/gun/energy        100 MeV
+/WCSimIO/RootFile  out/cprofile_13_100MeV.root
+
+/fqTune/mode cherenkovProfile

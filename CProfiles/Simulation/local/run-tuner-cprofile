@@ -1,0 +1,41 @@
+#!/bin/bash
+
+source $HOME/Software/Geant4/install/bin/geant4.sh
+source $HOME/Software/ROOT/install/bin/thisroot.sh
+
+export WCSIMDIR=$HOME/WCTE/Software/WCSim/install
+export FITQUNDIR=$HOME/WCTE/Software/WCSimFQTuner/build/
+
+rm -rf out && mkdir -p out
+cp $WCSIMDIR/macros/daq.mac .
+cp $WCSIMDIR/macros/jobOptions.mac .
+cp $WCSIMDIR/macros/tuning_parameters.mac .
+cp $WCSIMDIR/lib/libWCSimRootDict_rdict.pcm .
+cp $FITQUNDIR/WCSim_FQTuner .
+
+
+if (($# != 1 && $# != 2)); then
+    echo "expected 1 or 2 arguments: vis/batch nevents"
+    exit
+fi
+
+if [ $1 = 'vis' ]; then
+    gsed '$a\/control/execute vis.mac' cprofile.mac >> temp.mac
+    gsed '$a\/run/beamOn 1' temp.mac >> temp.mac
+    mv temp.mac WCSim.mac
+    ./WCSim_FQTuner
+    rm WCSim.mac
+elif [ $1 = 'batch' ]; then
+    gsed "\$a\ /run/beamOn $2" cprofile.mac >> temp.mac
+    ./WCSim_FQTuner temp.mac
+    rm temp.mac
+else
+    echo "Invalid option"
+fi
+
+rm WCSim_FQTuner
+rm geofile_*
+rm daq/mac
+rm jobOptions.mac
+rm tuning_parameters.mac
+rm libWCSimRootDict_rdict.pcm
