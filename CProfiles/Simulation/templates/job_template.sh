@@ -1,5 +1,11 @@
+#!/bin/bash
+
 export SCRATCHDIR=PROD_BASEDIR/scratch/jobid/
 mkdir -p $SCRATCHDIR
+
+source CONDA_INSTALLDIR/etc/profile.d/conda.sh
+conda activate wcte
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib
 
 source G4_INSTALLDIR/bin/geant4.sh
 source ROOT_INSTALLDIR/bin/thisroot.sh

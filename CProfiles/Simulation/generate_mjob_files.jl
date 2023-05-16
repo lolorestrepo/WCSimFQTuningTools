@@ -26,7 +26,7 @@ for mjobfiles in Iterators.partition(job_files, ntasks_per_job)
         JOBS *= "srun -n 1 $f &\n"
     end
     JOBS = chopsuffix(JOBS, "&\n")
-    JOBS *= "wait"
+    JOBS *= "\nwait"
 
     job = 
     replace( jobtemplate

@@ -17,6 +17,7 @@ replace( jobtemplate
        , "FQTUNER_INSTALLDIR" => abspath(fqtunerdir)
        , "WCSIM_INSTALLDIR"   => abspath(wcsimdir)
        , "G4_INSTALLDIR"      => abspath(g4dir)
+       , "CONDA_INSTALLDIR"   => abspath(condadir)
        , "ROOT_INSTALLDIR"    => abspath(rootdir))
 
 for macrofile in macro_files
@@ -28,6 +29,8 @@ for macrofile in macro_files
            , "jobid"     => jobid
            , "macrofile" => macrofile)
 
-    write(replace(jobs_fname, "jobid" => jobid), job)
+    job_fname_ = replace(jobs_fname, "jobid" => jobid)
+    write(job_fname_, job)
+    chmod(job_fname_, 0o744)
 end
 
