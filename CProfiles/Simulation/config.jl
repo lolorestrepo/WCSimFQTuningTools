@@ -1,16 +1,27 @@
-prod_basedir   = "$(ENV["HOME"])/WCTE/Production/Tuning/CProfiles/Simulation/prod/"
-tag            = "ccin2p3"
-particle       = "mu-"
-energies       = range(1000, 2000, step=10)
-nevents        = 1
-ntasks_per_job = 2
-base_mac       = "templates/cprofile_base.mac"
-job_template   = "templates/job_template.sh"
-mjob_template  = "templates/mjob_template.sh"
+module MyConfig
 
-fqtunerdir = "$(ENV["HOME"])/WCTE/Software/WCSimFQTuner/build"
-wcsimdir   = "$(ENV["HOME"])/WCTE/Software/WCSim/install"
-g4dir      = "$(ENV["HOME"])/Software/Geant4/install"
-rootdir    = "$(ENV["HOME"])/Software/ROOT/install"
+    export prod_basedir, tag, particle, energies, nevents_per_task, ntasks_per_energy, ntasks_per_job,
+           base_mac, job_template, mjob_template, fqtunerdir, wcsimdir, g4dir, condadir, rootdir,
+           get_energy_and_index
 
-get_fnumber(fname::String) = parse(Int, match(r"[0-9]+", basename(fname)).match)
+    prod_basedir      = "$(ENV["LUSTRE"])/CProfiles/"
+    tag               = "ccin2p3"
+    particle          = "mu-"
+    energies          = range(1000, 3000, step=50)
+    nevents_per_task  = 100
+    ntasks_per_energy = 20
+    ntasks_per_job    = 5
+    base_mac          = "templates/cprofile_base.mac"
+    job_template      = "templates/job_template.sh"
+    mjob_template     = "templates/mjob_template.sh"
+
+    fqtunerdir = "$(ENV["HOME"])/Software/WCSimFQTuner/build"
+    wcsimdir   = "$(ENV["HOME"])/Software/WCSim/install"
+    g4dir      = "$(ENV["HOME"])/Software/Geant4/install"
+    condadir   = "$(ENV["HOME"])/Software/miniconda3"
+    rootdir    = "$(ENV["HOME"])/Software/Root/install"
+
+    get_energy_and_index(fname::String) = map( x->parse(Int, x.match)
+                                            , getindex(collect(eachmatch(r"[0-9]+", basename(fname))), [1, 2]))
+
+end

@@ -1,12 +1,13 @@
-jobsdir        = "$(ENV["HOME"])/WCTE/Production/Tuning/CProfiles/Simulation/prod/mjobs/mu-"
+jobsdir        = "$(ENV["LUSTRE"])/CProfiles/mjobs/mu-"
 queue_command  = `squeue -ah`
-max_jobs_queue = 10
+max_jobs_queue = 100
+include("./CProfiles/Simulation/config.jl")
+using .MyConfig: get_energy_and_index as sorter
 
-get_fnumber(fname::String) = parse(Int, match(r"[0-9]+", basename(fname)).match)
-get_njobs_in_queue()       = parse(Int, replace(readchomp(pipeline(queue_command, `wc -l`)), " " => ""))
+get_njobs_in_queue() = parse(Int, replace(readchomp(pipeline(queue_command, `wc -l`)), " " => ""))
 
 job_files = readdir(jobsdir, join=true)
-sort!(job_files, by=get_fnumber)
+sort!(job_files, by=sorter)
 
 for job in job_files
 
@@ -19,4 +20,6 @@ for job in job_files
     wait(free_queue)
 
     run(`sbatch $job`)
+
+    println("$job launched")
 end

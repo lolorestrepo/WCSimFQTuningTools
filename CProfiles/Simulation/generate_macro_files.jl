@@ -1,25 +1,31 @@
 include("config.jl")
+using .MyConfig
 
-out_mac_fname  = joinpath("$prod_basedir/mac/$particle", "cprofile_energyMeV.mac")
-out_root_fname = joinpath("$prod_basedir/out/$particle", "cprofile_particle_energyMeV_tag.root")
+out_mac_fname  = joinpath("$prod_basedir/mac/$particle", "cprofile_energyMeV_idx.mac")
+out_root_fname = joinpath("$prod_basedir/out/$particle", "cprofile_energyMeV_idx_tag.root")
 
 mkpath(dirname(out_mac_fname))
 mkpath(dirname(out_root_fname))
 
+global rseed = 1
 for energy in energies
 
-    out_root_fname_ = replace( out_root_fname
-                             , "particle" => particle
-                             , "energy"   => energy
-                             , "tag"      => tag)
+    for idx in range(1, ntasks_per_energy)
 
-    mac = "/control/execute   $(abspath(base_mac)) \n\
-           /WCSim/random/seed $energy              \n\
-           /gun/particle      $particle            \n\
-           /gun/energy        $energy MeV          \n\
-           /WCSimIO/RootFile  $out_root_fname_     \n\
-           /run/beamOn        $nevents"
+        out_root_fname_ = replace( out_root_fname
+                                 , "energy"   => energy
+                                 , "idx"      => idx
+                                 , "tag"      => tag)
 
-    write(replace(out_mac_fname, "energy" => energy), mac)
+        mac = "/control/execute   $(abspath(base_mac)) \n\
+               /WCSim/random/seed $rseed               \n\
+               /gun/particle      $particle            \n\
+               /gun/energy        $energy MeV          \n\
+               /WCSimIO/RootFile  $out_root_fname_     \n\
+               /run/beamOn        $nevents_per_task"
+        global rseed += 1
+
+        write(replace(out_mac_fname, "energy" => energy, "idx" => idx), mac)
+    end
 end
 

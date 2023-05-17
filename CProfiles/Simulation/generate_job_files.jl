@@ -1,8 +1,9 @@
 include("config.jl")
+using .MyConfig
 
 jobs_fname  = joinpath("$prod_basedir/jobs/$particle/", "job_jobid.sh")
-macro_files = readdir("$prod_basedir/mac/$particle/", join=true)
-sort!(macro_files, by=get_fnumber)
+macro_files =  readdir("$prod_basedir/mac/$particle/", join=true)
+sort!(macro_files, by=get_energy_and_index)
 
 mkpath(dirname(jobs_fname))
 
@@ -22,7 +23,7 @@ replace( jobtemplate
 
 for macrofile in macro_files
 
-    jobid = get_fnumber(macrofile)
+    jobid = join(get_energy_and_index(macrofile), "_")
 
     job = 
     replace(jobtemplate

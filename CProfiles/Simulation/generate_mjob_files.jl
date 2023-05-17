@@ -1,8 +1,9 @@
 include("config.jl")
+using .MyConfig
 
 mjobs_fname = joinpath("$prod_basedir/mjobs/$particle/", "mjob_jobid.sh")
 job_files   =  readdir("$prod_basedir/jobs/$particle/", join=true)
-sort!(job_files, by=get_fnumber)
+sort!(job_files, by=get_energy_and_index)
 
 mkpath(dirname(mjobs_fname))
 mkpath("$prod_basedir/logs/")
@@ -19,7 +20,7 @@ replace( jobtemplate
 
 for mjobfiles in Iterators.partition(job_files, ntasks_per_job)
 
-    jobid = get_fnumber(mjobfiles[1])
+    jobid = join(get_energy_and_index(mjobfiles[1]), "_")
 
     JOBS = ""
     for f in mjobfiles
