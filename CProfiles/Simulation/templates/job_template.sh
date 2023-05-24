@@ -24,4 +24,4 @@ cp FQTUNER_INSTALLDIR/WCSim_FQTuner $SCRATCHDIR
 cd $SCRATCHDIR
 ./WCSim_FQTuner macrofile
 
-# rm -rf $SCRATCHDIR
+rm -rf $SCRATCHDIR
