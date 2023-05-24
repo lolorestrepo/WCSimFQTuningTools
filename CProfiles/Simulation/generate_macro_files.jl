@@ -21,6 +21,7 @@ for energy in energies
                /WCSim/random/seed $rseed               \n\
                /gun/particle      $particle            \n\
                /gun/energy        $energy MeV          \n\
+               /gun/direction     0 0 1                \n\
                /WCSimIO/RootFile  $out_root_fname_     \n\
                /run/beamOn        $nevents_per_task"
         global rseed += 1

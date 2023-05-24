@@ -2,7 +2,7 @@
 /tracking/verbose 0
 /hits/verbose 0
 
-/WCSim/WCgeom nuPRISMBeamTest_16cShort_mPMT
+/WCSim/WCgeom Cylinder_60x74_20inchBandL_14perCent
 /WCSim/PMT/ReplicaPlacement true
 
 /WCSim/PMT/PositionVariation 0 mm

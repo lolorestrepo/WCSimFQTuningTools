@@ -35,7 +35,7 @@ fi
 
 rm WCSim_FQTuner
 rm geofile_*
-rm daq/mac
+rm daq.mac
 rm jobOptions.mac
 rm tuning_parameters.mac
 rm libWCSimRootDict_rdict.pcm

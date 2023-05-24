@@ -2,7 +2,8 @@
 
 /WCSim/random/seed 100
 /gun/particle      mu-
-/gun/energy        100 MeV
-/WCSimIO/RootFile  out/cprofile_13_100MeV.root
+/gun/energy        1100 MeV
+/gun/direction     0 0 1
+/WCSimIO/RootFile  out/out.root
 
 /fqTune/mode cherenkovProfile
