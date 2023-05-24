@@ -23,7 +23,8 @@ replace( jobtemplate
 
 for macrofile in macro_files
 
-    jobid = join(get_energy_and_index(macrofile), "_")
+    energy, idx = get_energy_and_index(macrofile)
+    jobid = join([string(energy), string(Int(idx))], "_")
 
     job = 
     replace(jobtemplate

@@ -20,7 +20,8 @@ replace( jobtemplate
 
 for mjobfiles in Iterators.partition(job_files, ntasks_per_job)
 
-    jobid = join(get_energy_and_index(mjobfiles[1]), "_")
+    energy, idx = get_energy_and_index(mjobfiles[1])
+    jobid = join([string(energy), string(Int(idx))], "_")
 
     JOBS = ""
     for f in mjobfiles

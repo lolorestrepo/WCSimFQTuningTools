@@ -23,7 +23,7 @@ for energy in energies
                /gun/energy        $energy MeV          \n\
                /gun/direction     0 0 1                \n\
                /WCSimIO/RootFile  $out_root_fname_     \n\
-               /run/beamOn        $nevents_per_task"
+               /run/beamOn        $nevents_per_task    \n"
         global rseed += 1
 
         write(replace(out_mac_fname, "energy" => energy, "idx" => idx), mac)
