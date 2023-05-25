@@ -1,4 +1,4 @@
-jobsdir        = "$(ENV["LUSTRE"])/CProfiles/mjobs/mu-"
+jobsdir        = "$(ENV["LUSTRE"])/CProfiles/e-/mjobs/"
 queue_command  = `squeue -ah`
 max_jobs_queue = 100
 include("./CProfiles/Simulation/config.jl")

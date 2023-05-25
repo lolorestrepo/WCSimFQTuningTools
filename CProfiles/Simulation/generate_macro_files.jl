@@ -1,8 +1,8 @@
 include("config.jl")
 using .MyConfig
 
-out_mac_fname  = joinpath("$prod_basedir/mac/$particle", "cprofile_energyMeV_idx.mac")
-out_root_fname = joinpath("$prod_basedir/out/$particle", "cprofile_energyMeV_idx_tag.root")
+out_mac_fname  = joinpath("$prod_basedir/$particle/mac", "cprofile_energyMeV_idx.mac")
+out_root_fname = joinpath("$prod_basedir/$particle/out", "cprofile_energyMeV_idx_tag.root")
 
 mkpath(dirname(out_mac_fname))
 mkpath(dirname(out_root_fname))

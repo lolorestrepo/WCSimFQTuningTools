@@ -1,8 +1,8 @@
 include("config.jl")
 using .MyConfig
 
-jobs_fname  = joinpath("$prod_basedir/jobs/$particle/", "job_jobid.sh")
-macro_files =  readdir("$prod_basedir/mac/$particle/", join=true)
+jobs_fname  = joinpath("$prod_basedir/$particle/jobs/", "job_jobid.sh")
+macro_files =  readdir("$prod_basedir/$particle/mac", join=true)
 sort!(macro_files, by=get_energy_and_index)
 
 mkpath(dirname(jobs_fname))
