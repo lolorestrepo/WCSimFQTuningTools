@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export SCRATCHDIR=PROD_BASEDIR/scratch/jobid/
+export SCRATCHDIR=PROD_BASEDIR/scratch/taskid/
 mkdir -p $SCRATCHDIR
 
 source CONDA_INSTALLDIR/etc/profile.d/conda.sh

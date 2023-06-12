@@ -12,7 +12,7 @@
 
 start=$(date +%s)
 
-JOBS
+TASKS
 
 end=$(date +%s)
 echo "Time JOBNAME: $((($end-$start)/60)) mins"

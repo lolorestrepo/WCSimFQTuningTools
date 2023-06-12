@@ -2,24 +2,6 @@ Tools for the production of **fiTQun** tuning files
 
 ## CProfiles (Cherenkov Profiles)
 
-### **Simulation**
-
-Contains scripts to generate simulations.
-The simulations use  **WCSimFQTuner** with **/fqTune/mode cherenkovProfile** to save the angle of the cherenkov photons and their emission point from the start of the track for a fixed initial energy. Two angles are saved, true angle and weighted angle. (The weighted angle is used for the electron profile?)
-
-To run the simulations locally see **Simulation/local**.
-
-The **Simulation** directory contains scripts to run the simulations in a HPC cluster. The procedure is as follows:
-1) Modify the **config.jl** file parameters as required
-2) Modify the macro, job and mjob templates as required
-3) Run the scripts in the following order to produce the jobs
-
-    1) `julia generate_macro_files.jl`
-    2) `julia generate_job_files.jl`
-    3) `julia generate_mjob_files.jl`
-4) Finally modify and run the job launcher script in the parent directory `julia launch_jobs.jl`
-
-
 ### **TuningFile**
 Produce a single file containing the $(\cos \theta, s)$ distributions for each energy.
 1) ROOT setup (in order to be able to `import ROOT`) 

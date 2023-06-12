@@ -1,0 +1,26 @@
+/run/verbose 0
+/tracking/verbose 0
+/hits/verbose 0
+
+/WCSim/WCgeom nuPRISMBeamTest_16cShort_mPMT
+/WCSim/PMT/ReplicaPlacement true
+/WCSim/PMT/PositionVariation 0 mm
+/WCSim/PMT/TankRadiusChange 0 0 0 mm
+/WCSim/PMT/PositionFile mPMT-configfiles/mPMTconfig_Position_WCTE.txt
+/WCSim/Construct
+
+/WCSim/PMTQEMethod     Stacking_Only
+
+/WCSim/SavePi0 true
+
+/DAQ/Digitizer SKI
+/DAQ/Trigger NDigits
+/DarkRate/SetDarkMode 0
+
+/control/execute daq.mac
+
+/process/inactivate msc
+
+/fqTune/mode sttree
+
+/mygen/generator gps

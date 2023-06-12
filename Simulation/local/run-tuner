@@ -14,19 +14,19 @@ cp $WCSIMDIR/lib/libWCSimRootDict_rdict.pcm .
 cp $FITQUNDIR/WCSim_FQTuner .
 
 
-if (($# != 1 && $# != 2)); then
-    echo "expected 1 or 2 arguments: vis/batch nevents"
+if (($# != 2 && $# != 3)); then
+    echo "expected 2 or 3 arguments: vis/batch nevents"
     exit
 fi
 
-if [ $1 = 'vis' ]; then
-    gsed '$a\/control/execute vis.mac' cprofile.mac >> temp.mac
+if [ $2 = 'vis' ]; then
+    gsed '$a\/control/execute vis.mac' $1 >> temp.mac
     gsed '$a\/run/beamOn 1' temp.mac >> temp.mac
     mv temp.mac WCSim.mac
     ./WCSim_FQTuner
     rm WCSim.mac
-elif [ $1 = 'batch' ]; then
-    gsed "\$a\ /run/beamOn $2" cprofile.mac >> temp.mac
+elif [ $2 = 'batch' ]; then
+    gsed "\$a\ /run/beamOn $3" $1 >> temp.mac
     ./WCSim_FQTuner temp.mac
     rm temp.mac
 else

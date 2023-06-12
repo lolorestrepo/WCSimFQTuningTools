@@ -4,12 +4,11 @@
 
 /WCSim/WCgeom Cylinder_60x74_20inchBandL_14perCent
 /WCSim/PMT/ReplicaPlacement true
-
 /WCSim/PMT/PositionVariation 0 mm
 /WCSim/PMT/TankRadiusChange 0 0 0 mm
 /WCSim/PMT/PositionFile mPMT-configfiles/mPMTconfig_Position_WCTE.txt
-
 /WCSim/Construct
+
 /WCSim/PMTQEMethod     SensitiveDetector_Only
 
 /WCSim/PMTCollEff on
@@ -20,12 +19,7 @@
 
 /control/execute daq.mac
 
-/DarkRate/SetDarkRate 0 kHz   #Turn dark noise off
-
-/DarkRate/SetDarkMode 1
-/DarkRate/SetDarkHigh 100000
-/DarkRate/SetDarkLow 0
-/DarkRate/SetDarkWindow 1
+/DarkRate/SetDarkMode 0
 
 /fqTune/mode cherenkovProfile
 

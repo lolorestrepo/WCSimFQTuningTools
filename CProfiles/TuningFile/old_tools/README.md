@@ -6,7 +6,7 @@
     ```
     where **PID** is the particle id number from PDG.
 
-3) Compile and run **integcprofile.cc** (`g++ -o integcprofile integcprofile.cc 'root-config --cflags --libs\'`): integrates the cherenkov profiles for each momenta to produce the $I_n = \int g(s, cos\theta) s^n ~~ (n=0, 1, 2)$. Hardcoding needed for: 1) momenta values in the loop; 2) input file name if it is different from the **genhist.cc** output; 3) the parameters
+3) Compile and run **integcprofile.cc** (`g++ -o integcprofile integcprofile.cc $(root-config --glibs --cflags --libs)`): integrates the cherenkov profiles for each momenta to produce the $I_n = \int g(s, cos\theta) s^n ~~ (n=0, 1, 2)$. Hardcoding needed for: 1) momenta values in the loop; 2) input file name if it is different from the **genhist.cc** output; 3) the parameters
     - **R0max**: maximum $r_0$ distance, ie distance between PMT and track vertex.
     - **nR0bin**: number of $r_0$ bins.
     - **nth0bin**: number of $\cos \theta_0$ bins, where $\cos \theta_0 \in [-1, +1]$.

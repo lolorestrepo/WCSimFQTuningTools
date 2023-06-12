@@ -5,5 +5,3 @@
 /gun/energy        1100 MeV
 /gun/direction     0 0 1
 /WCSimIO/RootFile  out/out.root
-
-/fqTune/mode cherenkovProfile

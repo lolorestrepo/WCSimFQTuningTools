@@ -1,12 +1,10 @@
-jobsdir        = "$(ENV["LUSTRE"])/CProfiles/e-/mjobs/"
-queue_command  = `squeue -ah`
-max_jobs_queue = 100
-include("./CProfiles/Simulation/config.jl")
-using .MyConfig: get_energy_and_index as sorter
+include("config.jl")
+using .Parameters
 
 get_njobs_in_queue() = parse(Int, replace(readchomp(pipeline(queue_command, `wc -l`)), " " => ""))
 
-job_files = readdir(jobsdir, join=true)
+jobs_dir  = abspath(prod_basedir * "/jobs")
+job_files = readdir(jobs_dir, join=true)
 sort!(job_files, by=sorter)
 
 for job in job_files
@@ -19,7 +17,7 @@ for job in job_files
     schedule(free_queue)
     wait(free_queue)
 
-    run(`sbatch $job`)
+    #run(`sbatch $job`)
 
     println("$job launched")
 end
