@@ -1,0 +1,1 @@
+- Copy `TScatTable.h/.cc` from fiTQun here.
