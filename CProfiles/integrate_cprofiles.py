@@ -1,15 +1,8 @@
-import sys
 import re
-import glob
 import argparse
-import itertools
 import uproot
 import ROOT
 import numpy  as np
-
-from itertools import groupby
-from os.path   import expandvars, realpath, join, basename
-
 
 def histogram2d_to_func(hist, xbins, ybins):
     '''

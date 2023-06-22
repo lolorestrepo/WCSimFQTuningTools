@@ -28,7 +28,7 @@ def main():
     # sorter function
     get_energy_and_index = lambda fname: list(map(float, re.findall(r'\d+(?:\.\d+)?', basename(fname))[:2]))
 
-    # get all files in input dir, filter out the '_flat.root' and sorte them based on (energy, index)
+    # get all files in input dir, filter out the '_flat.root' and sort them based on (energy, index)
     infiles = glob.glob(join(args.indir[0], "*"))
     infiles = [f for f in infiles if re.match("cprofile_\d+(?:\.\d+)?MeV_\d+_[a-zA-Z0-9]+.root", basename(f))]
     infiles = sorted(infiles, key=get_energy_and_index)
