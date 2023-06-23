@@ -1,7 +1,7 @@
 include("config.jl")
 using .Parameters
 
-get_njobs_in_queue() = parse(Int, replace(readchomp(pipeline(queue_command, `wc -l`)), " " => ""))
+get_njobs_in_queue() = parse(Int, replace(readchomp(queue_command), " " => ""))
 
 jobs_dir  = abspath(prod_basedir * "/jobs")
 job_files = readdir(jobs_dir, join=true)
@@ -17,7 +17,7 @@ for job in job_files
     schedule(free_queue)
     wait(free_queue)
 
-    #run(`sbatch $job`)
+    run(`sbatch $job`)
 
     println("$job launched")
 end

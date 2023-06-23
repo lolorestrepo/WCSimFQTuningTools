@@ -50,6 +50,5 @@ for vals in Iterators.product(values(config_variables)...)
         write(replace(macro_fname, collect(d)...), mac)
 
         global rseed += 1
-        break
     end
 end

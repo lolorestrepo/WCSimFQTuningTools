@@ -9,12 +9,12 @@ module Parameters
        wcsimdir     = "$(ENV["HOME"])/Software/WCSim/install"
        g4dir        = "$(ENV["HOME"])/Software/Geant4/install"
        condadir     = "$(ENV["HOME"])/Software/miniconda3"
-       rootdir      = "$(ENV["HOME"])/Software/Root/install"
+       rootdir      = "$(ENV["HOME"])/Software/ROOT/install"
        prod_basedir = "$(ENV["LUSTRE"])/CProfiles/"
 
        verbose           = true
        nevents_per_task  = 200
-       nsubtasks         = 50
+       nsubtasks         = 100
        ntasks_per_job    = 10
        base_mac          = abspath("templates/cprofile_base.mac")
        config_mac        = abspath("templates/cprofile_config.mac")
@@ -22,9 +22,9 @@ module Parameters
        job_template      = abspath("templates/job_template.sh")
 
        config_variables  = Dict( "energy"   => range(100, 1000, step=10)
-                               , "particle" => ["e-"])
+                               , "particle" => ["e-", "mu-"])
 
-       queue_command  = `squeue -ah` # notice it is defined as a command using ``
+       queue_command  = pipeline(`squeue -ah`, `wc -l`)
        max_jobs_queue = 100
 end
 
