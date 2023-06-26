@@ -13,7 +13,7 @@ module Parameters
        prod_basedir = "$(ENV["LUSTRE"])/CProfiles/"
 
        verbose           = true
-       nevents_per_task  = 200
+       nevents_per_task  = 50
        nsubtasks         = 100
        ntasks_per_job    = 10
        base_mac          = abspath("templates/cprofile_base.mac")
@@ -28,5 +28,11 @@ module Parameters
        max_jobs_queue = 100
 end
 
-# dont need to modify, just needed by the scripts
-sorter(fname) = [parse(Float64, m.match) for m in eachmatch(r"\d+(\.\d+)?", basename(fname))]
+# dont need to modify, it is needed by the generate_job_files.jl and launch_jobs.jl scripts
+function sorter(fname)
+       # returns the values of the config_variables for a given fname
+       m    = match(r"_(.+)\.", basename(fname))
+       @assert length(m.captures) == 1
+       vars = split(m.captures[1], "_")
+       return [(tryparse(Float64, v) === nothing) ? v : parse(Float64, v) for v in vars]
+end

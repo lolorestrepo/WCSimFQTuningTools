@@ -25,10 +25,9 @@ replace( tasktemplate
        , "ROOT_INSTALLDIR"    => abspath(rootdir))
 
 for macrofile in macro_files
-
-    # compute taskid using sorter
-    s = sorter(macrofile)
-    taskid = string(join([string(v) for v in s[1:end-1]], "_"), "_", Int(s[end]))
+    
+    # taskid assumes macro files are named macro_var1_var2_..._varN.mac
+    taskid = basename(macrofile)[7:end-4]
 
     # create and write task
     task = replace( tasktemplate
