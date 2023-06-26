@@ -16,7 +16,7 @@
 int genhist(int PID){//PDG
 
     /////// MOVE TO ARGS ?
-    const char typ[]="tr"; //Track direction: "wt":weighted, "tr":true
+    const char typ[]="wt"; //Track direction: "wt":weighted, "tr":true
 
     // const char filename[100]="";
     // strcat(filename, getenv("LUSTRE"));
@@ -24,8 +24,8 @@ int genhist(int PID){//PDG
     // strcat(filename, "cprofile_%dMeV_%d_ccin2p3.root");
     ///////////////
     string fname = getenv("LUSTRE");
-    fname += "/CProfiles/e-/out/";
-    fname += "cprofile_%dMeV_%d_ccin2p3.root";
+    fname += "/CProfiles/out/e-/";
+    fname += "cprofile_%d.0MeV_%d.root";
     const char* filename = fname.c_str();
 
 

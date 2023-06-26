@@ -73,7 +73,7 @@ def main():
         s  = (sbins[1:] + sbins[:-1])/2.
         ds = sbins[1] - sbins[0]
 
-        # compute bin centers (avoids errors in computing th)
+        # compute bin centers (avoids errors as th lies alway -1<th<1)
         th0s = (th0bins[1:] + th0bins[:-1])/2.
         r0s  = ( r0bins[1:] +  r0bins[:-1])/2.
 

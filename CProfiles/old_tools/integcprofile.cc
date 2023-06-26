@@ -94,7 +94,7 @@ int main(int argc, char* argv[]){
   PID=atoi(argv[1]);
   cout << "Particle Code: " << PID << endl;
   
-  fin = new TFile(Form("%d_tr.root",PID));
+  fin = new TFile(Form("%d_wt.root",PID));
   
   if (fin->IsZombie()) {
     cout << "File does not exist!" << endl;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]){
     R0binEdgs[i]=i*R0max/(nR0bin-1);
   }
   for (i=0; i<=nth0bin; i++) {
-    th0binEdgs[i]=i*2./(nth0bin-1)-1.;
+    th0binEdgs[i]=i*2./nth0bin-1.;
   }
   
   for (i=0; i<3; i++) {

@@ -6,14 +6,14 @@
     ```
     where **PID** is the particle id number from PDG.
 
-3) Compile and run **integcprofile.cc** (`g++ -o integcprofile integcprofile.cc $(root-config --glibs --cflags --libs)`): integrates the cherenkov profiles for each momenta to produce the $I_n = \int g(s, cos\theta) s^n ~~ (n=0, 1, 2)$. Hardcoding needed for: 1) momenta values in the loop; 2) input file name if it is different from the **genhist.cc** output; 3) the parameters
-    - **R0max**: maximum $r_0$ distance, ie distance between PMT and track vertex.
+3) Compile and run **integcprofile.cc** (`g++ -o integcprofile integcprofile.cc $(root-config --glibs --cflags --libs)`): integrates the cherenkov profiles for each momenta to produce the $I_n = \int g(s, \cos\theta) s^n ~~ (n=0, 1, 2)$. Hardcoding needed for: 1) momenta values in the loop; 2) input file name if it is different from the **genhist.cc** output; 3) the parameters
+    - **R0max**: maximum $r_0$ distance in mm, ie distance between PMT and track vertex.
     - **nR0bin**: number of $r_0$ bins.
     - **nth0bin**: number of $\cos \theta_0$ bins, where $\cos \theta_0 \in [-1, +1]$.
     
     Run it through the compiled executable with `integcprofile PID 0`. The second argument **must** be 0, otherwise the default hardcoded HK parameter values will be used instead.
 
-4) Compile and run **fitcprofile.cc**. Script difficult to understand. Fits each Cherenkov profile, the number of partitions of each fit is hardcoded to 1. Run in through the executable `fitcprofile PID`
+4) Compile and run **fitcprofile.cc**. Script difficult to understand. Fits each Cherenkov profile, the number of partitions of each fit is hardcoded to 1. Run it through the executable `fitcprofile PID`
 5) Run the **writecprofile.cc** **ROOT** macro. Also difficult to understand. Fits the rest of the variables: the isotropic integrals, the gNphot and gsthr.
 
 ### **Comments/Bugs/Unknon behaviours**

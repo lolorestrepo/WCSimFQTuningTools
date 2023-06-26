@@ -20,17 +20,19 @@ def main():
 
     parser.add_argument( "indir", type=str, nargs=1, help = "directory containing produced files")
     parser.add_argument(  "type", type=str, nargs=1, help = "type of cherenkov profile") # modify this, it can be tr/wt
-    parser.add_argument( "-o", "--outpath", type=str, nargs="?", help = ".hdf5 file path", default=".")
     
     args = parser.parse_args()
     ##########################################
+
+    # check if type is tr or wt
+    if args.type[0] not in ["tr", "wt"]: raise Exception("Type must be one of tr or wt")
 
     # sorter function
     get_energy_and_index = lambda fname: list(map(float, re.findall(r'\d+(?:\.\d+)?', basename(fname))[:2]))
 
     # get all files in input dir, filter out the '_flat.root' and sort them based on (energy, index)
     infiles = glob.glob(join(args.indir[0], "*"))
-    infiles = [f for f in infiles if re.match("cprofile_\d+(?:\.\d+)?MeV_\d+_[a-zA-Z0-9]+.root", basename(f))]
+    infiles = [f for f in infiles if re.match("cprofile_\d+(?:\.\d+)?MeV_\d+.root", basename(f))]
     infiles = sorted(infiles, key=get_energy_and_index)
 
     # split input files in energy groups
@@ -44,7 +46,7 @@ def main():
     nphotons = [] # mean nphotons per energy
     for energy, files in zip(energies, groups):
 
-        if args.verbose: print(f"Processing {energy}".ljust(50))
+        if args.verbose: print(f"Processing {energy} MeV files...".ljust(50))
 
         nevents = 0
         # start with array to accumulate histogram entries
