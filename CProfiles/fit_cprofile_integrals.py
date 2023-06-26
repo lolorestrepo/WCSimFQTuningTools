@@ -36,9 +36,10 @@ def main():
     fout = ROOT.TFile("cprofiles_fits.root", "RECREATE")
 
     # fit parameters are saved in 3D histo, thus define the bins
-    parsbins = np.arange(-0.5, npars+0.5, 1)
+    # add +2 bins to save the fit bounds (to be fiTQun compatible)
+    parsbins = np.arange(-0.5, npars+0.5+2, 1)
     
-    # loop over integrals
+    # loop over s exponent in the integrals
     for n in range(3):
 
         if args.verbose: print(f"Fitting n={n}...")
@@ -48,7 +49,7 @@ def main():
         th3d = ROOT.TH3D( f"Js_{n}", f"Js_{n}"
                         ,  len(r0bins)-1,  r0bins
                         , len(th0bins)-1, th0bins
-                        ,          npars, parsbins)
+                        ,        npars+2, parsbins)
         
         th2d_chi2 = ROOT.TH2D( f"chi2_{n}", f"chi2_{n}"
                              ,  len(r0bins)-1,  r0bins
@@ -72,13 +73,16 @@ def main():
 
                 # fill 3D histogram with results
                 for i, ji in enumerate(np.flip(js), 1): th3d.SetBinContent(r0bin+1, th0bin+1, i, ji)
+                # save bounds (to be fiTQun compatible)
+                th3d.SetBinContent(r0bin+1, th0bin+1, npars+1, log_energies[0])
+                th3d.SetBinContent(r0bin+1, th0bin+1, npars+2, log_energies[-1])
 
                 # compute and save chi2
                 p = np.poly1d(js)
                 chi2 = sum((p(log_energies) - I)**2)
                 th2d_chi2.SetBinContent(r0bin+1, th0bin+1, chi2)
 
-                # save one in nsect histo
+                # save 1 in nsect histo (to be fiTQun compatible)
                 th2d_nsect.SetBinContent(r0bin+1, th0bin+1, 1)
 
         fout.WriteObject(      th3d, f"hI3d_par_{n}")
@@ -97,8 +101,8 @@ def main():
     
 
     # fit and save isotropic integrals, gNphot and gsthr
-    parsbins = np.arange(-0.5, npars+0.5 + 2, 1) # add 2 more bins to add section bounds
-
+    # add +2 bins to save the fit bounds (to be fiTQun compatible)
+    parsbins = np.arange(-0.5, npars+0.5+2, 1)
     # fit and save isotopric integrals
     for n in range(1, 3):
         h, ebins = fin[f"I_iso_{n}"].to_numpy()
@@ -106,7 +110,7 @@ def main():
         pars = np.polyfit(np.log(energies), np.log(h), npars-1)
         th1d = ROOT.TH1D(f"gI_iso_{n}_pars", f"gI_iso_{n}_pars",  len(parsbins)-1, parsbins)
         for i, pi in enumerate(np.flip(pars), 1): th1d.SetBinContent(i, pi)
-        th1d.SetBinContent(npars+1  , np.log(energies[0]))
+        th1d.SetBinContent(npars+1, np.log(energies[0]))
         th1d.SetBinContent(npars+2, np.log(energies[-1]))
         fout.WriteObject(th1d, f"gI_iso_{n}_pars")
 
