@@ -1,8 +1,7 @@
-Tools for the production of **fiTQun** tuning files
+Tools for the production of **fiTQun** tuning files from simulation output.
 
 ## CProfiles (Cherenkov Profiles)
 
-### **TuningFile**
 Produce a single file containing the $(\cos \theta, s)$ distributions for each energy.
 1) ROOT setup (in order to be able to `import ROOT`) 
 2) Run `merge_cprofiles.py` script: `python merge_cprofiles.py /path/to/input/files/ tr|wt [-v]`, where the input files must be named as **cprofile_{energy}MeV_{integer}.root**. It outputs **cprofiles_merged.root** which merges the cherenkov profiles for all the simulated momenta. The second argument stands for **tr** (true) or **wt** (weighted) profiles.
