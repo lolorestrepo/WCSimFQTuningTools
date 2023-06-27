@@ -19,6 +19,7 @@ void DoIntegral(TH2D *hg, double R0, double costh0, double *In)
   double val;
   double s,sn,costh,Rsx,Rsy,Rs;
   const double cosmx=1.-1e-12;//interpolation fails if costh==1.
+  int bin;
   
   double ex=-costh0;
   double ey=sqrt(1.-costh0*costh0);
@@ -33,7 +34,9 @@ void DoIntegral(TH2D *hg, double R0, double costh0, double *In)
     if (costh<-1.) costh=-1.;
     if (costh>cosmx) costh=cosmx;
     sn=1.;
-    val=hg->Interpolate(costh,s);
+    // val=hg->Interpolate(costh,s);
+    bin = hg->FindBin(costh, s);
+    val = hg->GetBinContent(bin);
     for (int ns=0; ns<3; ns++) {
       In[ns]+=val*sn;
       sn*=s;
@@ -133,9 +136,9 @@ int main(int argc, char* argv[]){
     cout << "p=" << armom[imom] << "MeV" << endl;
     wtgtmp = (TH2D*)fin->Get(Form("g_%d_%d",PID,armom[imom]));
     for (j=1; j<=nR0bin; j++) {
-      R0=hI3d[0]->GetXaxis()->GetBinLowEdge(j);
+      R0=hI3d[0]->GetXaxis()->GetBinCenter(j);
       for (k=1; k<=nth0bin; k++) {
-        costh0=hI3d[0]->GetYaxis()->GetBinLowEdge(k);
+        costh0=hI3d[0]->GetYaxis()->GetBinCenter(k);
         DoIntegral(wtgtmp,R0,costh0,Inarr);
         for (i=0; i<3; i++) hI3d[i]->SetBinContent(j,k,imom+1,Inarr[i]);//Bin contents are evaluated at bin low edges!
       }

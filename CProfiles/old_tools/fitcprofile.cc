@@ -591,6 +591,7 @@ int main(int argc, char* argv[]){//PDG
           arval[imom]=hI3d[i]->GetBinContent(j,k,imom+imomofst+1);
 //          arerr[imom]=sqrt(arval[imom])/10.;
           arerr[imom]=arval[imom]/100.;
+          arerr[imom]=1.;
         }
         
         gtmp = new TGraphErrors(nmom,armom,arval,NULL,arerr);

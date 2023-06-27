@@ -341,4 +341,6 @@ int writecprof(int PID){//PDG
   delete fout;
   delete fin2;
   delete fin;
+  
+  return 0;
 }
