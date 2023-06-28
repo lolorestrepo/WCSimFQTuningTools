@@ -1,3 +1,6 @@
+# compiled ROOT macros
+*.so *.pcm *.d
+
 # python
 *__pycache__
 

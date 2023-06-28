@@ -86,38 +86,49 @@ def azimuth_angle(v):
     **v** can be an array of vectors, ie an array of shape (# of vectors, vector dimension)
     """
     # between [-pi, pi]
-    m   = np.linalg.norm(v, axis=1)
+    m   = np.linalg.norm(v[:, (0, 1)], axis=1)
     px  = v[:, 0] / m
     phi = np.arccos(px)
     sel = (v[:, 1] != 0)
-    phi[sel] = np.sign(v[:, 1]) * phi[sel]
+    phi[sel] = np.sign(v[sel, 1]) * phi[sel]
     # transform to [0, 2pi)
     phi[phi<0] += 2.*np.pi
     return phi
 
 
-def read_stable(filename):
+def clockwise_angle(v1, v2):
+    """Returns clockwise angle between the two vectors"""
+    angles = np.zeros(len(v1))
+    a1 = azimuth_angle(v1)
+    a2 = azimuth_angle(v2)
+    
+    da = a2 - a1
+    sel = da>0
+    angles[ sel] = 2.*np.pi - da[sel]
+    sel = da<0
+    angles[sel] = -da[sel]
+    return angles
+
+
+def read_stable(filename, names=["botscattable", "topscattable", "sidescattable"]):
     """
     Read STables from file as numpy arrays
     the output is a dictionary with the bins and the tables 
     for the bottom, top and side PMTs
     """
+    # TO-DO: Load TScatTable_c.so library inside function
     out = dict()
 
     file = ROOT.TFile(expandvars(filename))
-    for tabname in ["botscattable", "topscattable", "sidescattable"]:
+    for tabname in names:
         tab = file.Get(tabname)
 
-        bins  = []
-        nbins = []
-        for d in range(6):
-            nbins.append(tab.GetNBins(d))
-            bounds = [tab.GetAxisBound(d, i) for i in range(2)]
-            bins.append(np.linspace(bounds[0], bounds[1], nbins[-1]))
-            
+        nbins  = [tab.GetNBins(dim) for dim in range(6)]
+        bounds = [[tab.GetAxisBound(dim, i) for i in range(2)] for dim in range(6)]
+
         histo6d = np.ndarray(shape=nbins)
         for index in itertools.product(*[range(n) for n in nbins]): histo6d[index] = tab.GetElement(*index)
         
-        out[tabname + "_bins"] = bins
+        out[tabname + "_bins"] = (nbins, bounds)
         out[tabname]           = histo6d
     return out

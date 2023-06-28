@@ -5,9 +5,9 @@ import uproot
 import ROOT
 import numpy  as np
 
-from os.path   import expandvars, join, basename
+from os.path   import expandvars, join, basename, exists
 
-from STable_tools import read_wcsim_geometry, split_tubeids, azimuth_angle
+from STable_tools import read_wcsim_geometry, split_tubeids, clockwise_angle
 
 
 def main():
@@ -26,22 +26,23 @@ def main():
     
     parser.add_argument("-v", "--verbose", action="store_true")
 
-    parser.add_argument(    "indir", type=str, nargs=1, help = "directory containing produced files")
-    parser.add_argument(    "nbins", type=int, nargs=7, help = "histogram bins in the following order for variables: zs,Rs,R_PMT,z_PMT,phi,zd,theta"
-                                                      , default=[35, 16, 8, 16, 16, 16, 16])
-    parser.add_argument(    "-vaxis",    "--vaxis", type=int, nargs="?", help = "detector vertical axis (0)", default=2)
-    parser.add_argument( "-wcsimlib", "--wcsimlib", type=str, nargs="?", help = "WCSim lib path"            , default="$HOME/Software/WCSim/install/lib")
-    parser.add_argument(   "-fitqun",   "--fitqun", type=str, nargs="?", help = "fiTQun source directory"   , default="$HOME/Software/fiTQun/fiTQun/")
-
-    parser.add_argument( "-o", "--outpath", type=str, nargs="?", help = ".hdf5 file path", default=".")
+    parser.add_argument(      "indir", type=str, nargs=1,   help = "directory containing produced files")
+    parser.add_argument(    "--nbins", type=int, nargs=7,   help = "histogram bins in the following order: zs,Rs,R_PMT,z_PMT,phi,zd,theta"
+                                                                                               , default=[35, 16, 8, 16, 16, 16, 16])
+    parser.add_argument(    "--vaxis", type=int, nargs="?", help = "detector vertical axis (0)", default=2)
+    parser.add_argument( "--wcsimlib", type=str, nargs="?", help = "WCSim lib path"            , default="$HOME/Software/WCSim/install/lib")
+    parser.add_argument(   "--fitqun", type=str, nargs="?", help = "fiTQun source directory"   , default="$HOME/Software/fiTQun/fiTQun/")
     
     args = parser.parse_args()
     ##########################################
 
     # Load TScatTable class from fiTQun
-    if args.verbose: print("Compiling fiTQun TScatTableF.cc...")
-    ROOT.gROOT.SetMacroPath(expandvars(args.fitqun))
-    ROOT.gROOT.LoadMacro("TScatTableF.cc++")
+    filename = join(expandvars(args.fitqun), "TScatTableF_cc.so")
+    if exists(filename): ROOT.gSystem.Load(filename)
+    else:
+        if args.verbose: print("Compiling fiTQun TScatTableF.cc...")
+        ROOT.gROOT.SetMacroPath(expandvars(args.fitqun))
+        ROOT.gROOT.LoadMacro("TScatTableF.cc++")
 
     # Load WCSimRoot.so
     ROOT.gSystem.AddDynamicPath(expandvars(args.wcsimlib))
@@ -49,12 +50,16 @@ def main():
 
     # get simulation filenames, removing those ending in '_flat.root'
     infiles = glob.glob(join(args.indir[0], "*"))
-    infiles = [f for f in infiles if "_flat.root" not in basename(f)]
+    infiles = sorted([f for f in infiles if "_flat.root" not in basename(f)])
 
-    # Get horizontal indexes (vaxis defines the index of the vertical direction)
+    # Select rotation matrix based on vertical axis
     vaxis = args.vaxis
-    axes  = np.array([0, 1, 2])
-    haxes = axes[axes != vaxis]
+    if   vaxis == 0:
+        R = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
+    elif vaxis == 1:
+        R = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+    elif vaxis == 2: pass
+    else: raise Exception("Invalid value for vertical axis (vaxis)")
 
     # get bottom, top and side tube-ids from the first file
     tubeid_bottom, tubeid_top, tubeid_side = split_tubeids(infiles[0], vaxis=vaxis)
@@ -64,6 +69,11 @@ def main():
     tube_ztop = df.loc["WCCylLength", "WC"]/2.  # detector cylinder half-length
     tube_rad  = df.loc["WCPMTRadius", "WC"]     # PMT module radius
     cyl_rad   = df.loc["WCCylRadius", "WC"]     # detector cylinder radius
+
+    # hardcoded dimensions
+    tube_ztop  = 136.95
+    tube_rad   = 20.
+    cyl_rad    = 172.05
 
     # Define scatering table binning
     # 6 variables
@@ -84,7 +94,7 @@ def main():
     
     zs    = [-(tube_ztop - tube_rad), tube_ztop - tube_rad]
     Rs    = [0., cyl_rad - tube_rad]
-    R_PMT = [0, cyl_rad]
+    R_PMT = [0., cyl_rad - tube_rad]
     z_PMT = [-(tube_ztop - tube_rad), tube_ztop - tube_rad]
     phi   = [-np.pi, +np.pi]
     zd    = [-1., 1.]
@@ -116,8 +126,8 @@ def main():
                                      , nzs, zs[0], zs[1], nRs, Rs[0], Rs[1], nz_PMT, z_PMT[0], z_PMT[1], nphi, phi[0], phi[1])
 
     # Loop over simulation files in order to fill the table histograms
-    for filename in infiles:
-        if args.verbose: print("Processing", basename(filename))
+    for n, filename in enumerate(infiles, 1):
+        if args.verbose: print(f"Processing file {n}/{len(infiles)}...", basename(filename))
         # read data
         with uproot.open(filename) as f:
             # contains the following data if the optical photon reaches a PMT
@@ -126,8 +136,8 @@ def main():
             srcpos = f["sttree/srcpos"].array().to_numpy()
             srcdir = f["sttree/srcdir"].array().to_numpy()
             # photon pos and dir
-            oppos  = f["sttree/oppos"] .array().to_numpy()
-            opdir  = f["sttree/opdir"] .array().to_numpy()
+            #oppos  = f["sttree/oppos"] .array().to_numpy()
+            #opdir  = f["sttree/opdir"] .array().to_numpy()
             # PMT number/pos
             ihPMT   = f["sttree/ihPMT"]  .array().to_numpy()
             tubepos = f["sttree/tubepos"].array().to_numpy()
@@ -136,15 +146,30 @@ def main():
             # ISTORY=(# of refl)*1000 + (# of scat); 0 if direct hit
             isct = f["sttree/isct"].array().to_numpy()
 
+
+        # Rotate with vertical direction given by vaxis
+        if vaxis != 2:
+            srcpos  = np.matmul(R,  srcpos.T).T
+            srcdir  = np.matmul(R,  srcdir.T).T
+            #oppos   = np.matmul(R,   oppos.T).T
+            #opdir   = np.matmul(R,   opdir.T).T
+            tubepos = np.matmul(R, tubepos.T).T
+
         # Compute scattering table variables
-        zs    =  srcpos[:, vaxis]
-        Rs    = np.sum(srcpos[:, haxes]**2, axis=1)**0.5
+        zs    =  srcpos[:, 2]
+        Rs    = np.sum(srcpos[:, (0, 1)]**2, axis=1)**0.5
         # z_PMT used for side table, R_PMT used for bottom and top
-        z_PMT = tubepos[:, vaxis]
-        R_PMT = np.sum(tubepos[:, haxes]**2, axis=1)**0.5
-        phi   = np.abs(azimuth_angle(srcpos) - azimuth_angle(tubepos))
-        zd    = opdir[:, vaxis]
-        theta = np.abs(azimuth_angle(srcpos) - azimuth_angle(tubepos-srcpos))
+        z_PMT = tubepos[:, 2]
+        R_PMT = np.sum(tubepos[:, (0, 1)]**2, axis=1)**0.5
+        phi   = clockwise_angle(tubepos, srcpos)
+        zd    = srcdir[:, 2]
+        theta = clockwise_angle(srcdir, tubepos-srcpos)
+
+        # transform from mm to cm
+        zs    *= 0.1
+        Rs    *= 0.1
+        z_PMT *= 0.1
+        R_PMT *= 0.1
 
         # transform angles from [0, 2pi] to [-pi, pi]
         phi  [  phi>np.pi] -= 2.*np.pi
