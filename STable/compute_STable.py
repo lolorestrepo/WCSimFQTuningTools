@@ -216,6 +216,7 @@ def main():
     fout.WriteObject(Tbottom_indirect, "botscattable")
     fout.WriteObject(Ttop_indirect   , "topscattable")
     fout.WriteObject(Tside_indirect  , "sidescattable")
+    fout.Close()
     
     return
 
