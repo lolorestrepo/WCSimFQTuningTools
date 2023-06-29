@@ -1,7 +1,7 @@
 /control/execute   $base_mac
 /WCSim/random/seed $rseed
 
-/gps/particle   e-
+/gps/particle   $particle
 /gps/ene/type   Mono
 /gps/energy     3.0 MeV
 /gps/pos/type   Volume

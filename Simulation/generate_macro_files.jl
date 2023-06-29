@@ -37,6 +37,7 @@ for vals in Iterators.product(values(config_variables)...)
     # subtask for each set of values
     for subtask in range(1, nsubtasks)
         # add values to dic
+        d["rseed"]          = rseed
         d["subtask"]        = subtask
         d["out_root_fname"] = replace(out_fname, collect(d)...)
 
