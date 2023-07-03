@@ -13,7 +13,6 @@ def read_wcsim_geometry(filename):
     The first dataframe contains general information about the detector,
     and the second returns the information for each PMT
     """
-
     rootf = ROOT.TFile(expandvars(filename), "read")
 
     tree  = rootf.GetKey("wcsimGeoT").ReadObj()

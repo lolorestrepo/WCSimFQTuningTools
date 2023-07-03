@@ -26,12 +26,13 @@ def main():
     
     parser.add_argument("-v", "--verbose", action="store_true")
 
-    parser.add_argument(      "indir", type=str, nargs=1,   help = "directory containing produced files")
-    parser.add_argument(    "--nbins", type=int, nargs=7,   help = "histogram bins in the following order: zs,Rs,R_PMT,z_PMT,phi,zd,theta"
-                                                                                               , default=[35, 16, 8, 16, 16, 16, 16])
-    parser.add_argument(    "--vaxis", type=int, nargs="?", help = "detector vertical axis (0)", default=2)
-    parser.add_argument( "--wcsimlib", type=str, nargs="?", help = "WCSim lib path"            , default="$HOME/Software/WCSim/install/lib")
-    parser.add_argument(   "--fitqun", type=str, nargs="?", help = "fiTQun source directory"   , default="$HOME/Software/fiTQun/fiTQun/")
+    parser.add_argument(      "indir",   type=str,   nargs=1, help = "directory containing produced files")
+    parser.add_argument(    "--nbins",   type=int,   nargs=7, help = "histogram bins in the following order: zs,Rs,R_PMT,z_PMT,phi,zd,theta", default=[35, 16, 8, 16, 16, 16, 16])
+    parser.add_argument(    "--vaxis",   type=int, nargs="?", help = "detector vertical axis (0)", default=2)    
+    parser.add_argument(    "--zedge", type=float, nargs="?", help = "histogram edge for vertical (z) dimensions in cm", default=136.95-20.) # default wcte
+    parser.add_argument(    "--redge", type=float, nargs="?", help = "histogram edge for radial (r) dimensions in cm"  , default=172.05-20.) # default wcte
+    parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path"         , default="$HOME/Software/WCSim/install/lib")
+    parser.add_argument(   "--fitqun",   type=str, nargs="?", help = "fiTQun source directory", default="$HOME/Software/fiTQun/fiTQun/")
     
     args = parser.parse_args()
     ##########################################
@@ -64,16 +65,12 @@ def main():
     # get bottom, top and side tube-ids from the first file
     tubeid_bottom, tubeid_top, tubeid_side = split_tubeids(infiles[0], vaxis=vaxis)
 
-    # Define TScatTable 6D histogram
-    df, _     = read_wcsim_geometry(infiles[0])
-    tube_ztop = df.loc["WCCylLength", "WC"]/2.  # detector cylinder half-length
-    tube_rad  = df.loc["WCPMTRadius", "WC"]     # PMT module radius
-    cyl_rad   = df.loc["WCCylRadius", "WC"]     # detector cylinder radius
-
-    # hardcoded dimensions
-    tube_ztop  = 136.95
-    tube_rad   = 20.
-    cyl_rad    = 172.05
+    # this lines are commented because these parameter definitions ere misleading in WCSim
+    # # Define TScatTable 6D histogram
+    # df, _     = read_wcsim_geometry(infiles[0])
+    # tube_ztop = df.loc["WCCylLength", "WC"]/2.  # detector cylinder half-length
+    # tube_rad  = df.loc["WCPMTRadius", "WC"]     # PMT module radius
+    # cyl_rad   = df.loc["WCCylRadius", "WC"]     # detector cylinder radius
 
     # Define scatering table binning
     # 6 variables
@@ -91,11 +88,14 @@ def main():
     nphi   = args.nbins[4]
     nzd    = args.nbins[5]
     ntheta = args.nbins[6]
-    
-    zs    = [-(tube_ztop - tube_rad), tube_ztop - tube_rad]
-    Rs    = [0., cyl_rad - tube_rad]
-    R_PMT = [0., cyl_rad - tube_rad]
-    z_PMT = [-(tube_ztop - tube_rad), tube_ztop - tube_rad]
+
+    zedge = args.zedge[0]
+    redge = args.redge[0]
+
+    zs    = [-zedge, zedge]
+    Rs    = [0., redge]
+    R_PMT = [0., redge]
+    z_PMT = [-zedge, zedge]
     phi   = [-np.pi, +np.pi]
     zd    = [-1., 1.]
     theta = [-np.pi, +np.pi]
