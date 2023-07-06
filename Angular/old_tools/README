@@ -1,0 +1,14 @@
+The first step is to porduce the response histograms from MC electron bombs:
+```
+root -b
+gSystem->Load("/pbs/home/g/gdiazlop/Software/WCSim/install/lib/libWCSimRoot.so");
+.L angularResponsePlotter_v1.C
+angularResponsePlotter_v1("files.txt", "angular.root", 1, 1)
+```
+
+then perform the fits
+```
+root -b
+.L fit_cos.C++
+fit_cos("angular.root", "geoName")
+```
