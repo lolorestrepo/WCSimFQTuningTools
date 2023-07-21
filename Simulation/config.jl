@@ -10,19 +10,22 @@ module Parameters
        g4dir        = "$(ENV["HOME"])/Software/Geant4/install"
        condadir     = "$(ENV["HOME"])/Software/miniconda3"
        rootdir      = "$(ENV["HOME"])/Software/ROOT/install"
-       prod_basedir = "$(ENV["LUSTRE"])/CProfiles/"
+       prod_basedir = "$(ENV["LUSTRE"])/Charge/"
 
        verbose           = true
        nevents_per_task  = 50
-       nsubtasks         = 100
-       ntasks_per_job    = 10
-       base_mac          = abspath("templates/cprofile_base.mac")
-       config_mac        = abspath("templates/cprofile_config.mac")
+       nsubtasks         = 5
+       ntasks_per_job    = 5
+       base_mac          = abspath("templates/charge_base.mac")
+       config_mac        = abspath("templates/charge_config.mac")
        task_template     = abspath("templates/task_template.sh")
        job_template      = abspath("templates/job_template.sh")
 
-       config_variables  = Dict( "energy"   => range(100, 1000, step=10)
-                               , "particle" => ["e-", "mu-"])
+       # config_variables  = Dict( "energy"   => range(100, 1000, step=10)
+       #                         , "particle" => ["e-"])
+       # config_variables = Dict( "particle" => ["e-"])
+       config_variables = Dict("predicted_charge" => vcat(range(1, 9), range(10, 19, step=2), range(20, 50, step=5)))
+
 
        queue_command  = pipeline(`squeue -ah`, `wc -l`)
        max_jobs_queue = 100

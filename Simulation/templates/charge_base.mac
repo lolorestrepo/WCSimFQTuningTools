@@ -1,0 +1,25 @@
+/run/verbose 0
+/tracking/verbose 0
+/hits/verbose 0
+
+/WCSim/WCgeom nuPRISMBeamTest_16cShort_mPMT
+/WCSim/PMT/ReplicaPlacement true
+/WCSim/PMT/PositionVariation 0 mm
+/WCSim/PMT/TankRadiusChange 0 0 0 mm
+/WCSim/PMT/PositionFile mPMT-configfiles/mPMTconfig_Position_WCTE.txt
+/WCSim/Construct
+
+/WCSim/PMTQEMethod Stacking_Only
+/WCSim/PMTCollEff on
+
+/WCSim/SavePi0 false
+
+/DarkRate/SetDarkRate 0. kHz
+
+/DarkRate/SetConvert 1.367
+
+/mygen/generator gun
+/gun/particle e-
+/gun/energy 1 keV
+/gun/direction 1 0 0 
+/gun/position 0 0 0

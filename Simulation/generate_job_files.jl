@@ -31,7 +31,7 @@ for taskfiles in Iterators.partition(task_files, ntasks_per_job)
     # add line for each task 
     tasks = ""
     for f in taskfiles
-        tasks *= "srun -n 1 $f &\n"
+        tasks *= "srun -n 1 --exclusive $f &\n"
     end
     tasks = chopsuffix(tasks, "&\n")
     tasks *= "\nwait"
