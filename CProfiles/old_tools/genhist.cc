@@ -24,7 +24,7 @@ int genhist(int PID){//PDG
     // strcat(filename, "cprofile_%dMeV_%d_ccin2p3.root");
     ///////////////
     string fname = getenv("LUSTRE");
-    fname += "/CProfiles/out/e-/";
+    fname += "/CProfiles/out/";
     fname += "cprofile_%d.0MeV_%d.root";
     const char* filename = fname.c_str();
 
@@ -76,7 +76,6 @@ int genhist(int PID){//PDG
             wtg[nmom]->Add(wtgtmp);
             delete fin;
             j++;
-            break;
         }
         if (!wtg[nmom]) continue;//skip this momentum
 

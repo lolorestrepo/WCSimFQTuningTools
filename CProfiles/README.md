@@ -1,5 +1,3 @@
-Tools for the production of **fiTQun** tuning files from simulation output.
-
 ## CProfiles (Cherenkov Profiles)
 
 Produce a single file containing the $(\cos \theta, s)$ distributions for each energy.
