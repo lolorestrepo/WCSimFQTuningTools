@@ -1,7 +1,9 @@
 #include <iostream>
+#include "TScatTable.h"
 #include "TScatTableF.h"
 #include "TFile.h"
 #include "TROOT.h"
+#include "TSystem.h"
 
 void convScatTable() {
 // convert TScatTable to TScatTableF

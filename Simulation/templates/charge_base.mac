@@ -15,7 +15,6 @@
 /WCSim/SavePi0 false
 
 /DarkRate/SetDarkRate 0. kHz
-
 /DarkRate/SetConvert 1.367
 
 /mygen/generator gun

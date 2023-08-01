@@ -8,6 +8,7 @@ void runScatTableLooper(TString strpath="./", bool isNuPRISM=1, bool ismPMT=1)
 
   gROOT->SetMacroPath("/pbs/home/g/gdiazlop/Software/WCSimFQTuningTools/STable/old_tools");  
   gROOT->ProcessLine(".L TScatTable.cc+");
+  gROOT->ProcessLine(".L TScatTableF.cc+");
   gROOT->ProcessLine(".L scatTableLooper.C+");
 
   scatTableLooper stl;
