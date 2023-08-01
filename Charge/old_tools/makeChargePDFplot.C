@@ -47,7 +47,7 @@ void makeChargePDFplot(std::string fNameWCSim, std::string fNameOut){
   double qbinEdg[500];
   int nqbins;
 
-  ifstream fin("qbins_sk1.txt");
+  ifstream fin("../qbins_wcte.txt");
   int i=0;
   while (1) {
     fin >> qbinEdg[i];
@@ -56,7 +56,7 @@ void makeChargePDFplot(std::string fNameWCSim, std::string fNameOut){
       cout << "qbins.txt: q must be in ascending order!" << endl;
       exit(-1);
     }
-    if ( fin.eof() || qbinEdg[i] == 1500 ) break;
+    if ( fin.eof() || qbinEdg[i] == 120 ) break;
 
     bEtmp=qbinEdg[i];
     i++;

@@ -20,7 +20,7 @@ int gen2d(){
   char mustr[nmumax][10];
   int nmuval;
   
-  ifstream fin("mutbl.txt");
+  ifstream fin("mutbl_wcte.txt");
   
   double mutmp=0;
   int i=0;
@@ -62,7 +62,7 @@ int gen2d(){
   TH2D *h2d[2]={NULL,NULL};;
   
   for (i=0; i<nmuval; i++) {
-    TFile *hstf = new TFile(Form("%s_pdf.root",mustr[i]));
+    TFile *hstf = new TFile(Form("./chargePDF/%s_pdf.root",mustr[i]));
     gDirectory->cd(cPath);
     
     TH1D *hctr = (TH1D*)(hstf->Get("hctr"));

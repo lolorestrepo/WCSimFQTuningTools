@@ -1,24 +1,39 @@
 
 // fit f(q|mu) at different q range
 
-//#include <iostream>
-//
-//#include <TF1.h>
-//#include <TGraph.h>
-//#include <TGraphErrors.h>
-//#include <TGraphAsymmErrors.h>
-//#include <TH1.h>
-//#include <TH1D.h>
-//#include <TH2D.h>
-//#include <TFile.h>
+#include <iostream>
+
+#include <TF1.h>
+#include <TGraph.h>
+#include <TGraphErrors.h>
+#include <TGraphAsymmErrors.h>
+#include <TH1.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TFile.h>
+#include "/pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF.h"
 
 bool flgUseInputThrGraph=true;
 TGraph *gmuThrIn[2];
 
+void GetmuThresh(double qval, double &muthrLo, double &muthrHi) {// Define thresholds of mu
+  
+  double thrw=sqrt(qval)*4.;
+  muthrLo=qval-thrw;
+  muthrHi=qval+thrw;
+  
+  if (flgUseInputThrGraph) {
+    muthrLo = gmuThrIn[0]->Eval(qval);
+    muthrHi = gmuThrIn[1]->Eval(qval);
+  }
+  
+}
+
 //iPMTType= 0:old, 1:new PMT
 int fitpdf(int iPMTType, int iSK_Ver){
   
-  gROOT->ProcessLine(".L fQChrgPDF.cc+");
+  // gROOT->ProcessLine(".L fQChrgPDF.cc+");
+  // gROOT->ProcessLine(".L /pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF.cc++");
   
   fQChrgPDF::Get()->SetGlobal_PMTType(iPMTType);
   
@@ -160,7 +175,7 @@ int fitpdf(int iPMTType, int iSK_Ver){
         gErr[ngent] = bErr;
         gErru[ngent] = log(1+bErr/bCont);
         Double_t Errtmp = 1-bErr/bCont;
-        if (!(Errtmp>0.)) Errtmp=1e-100; 
+        if (!(Errtmp>0.)) Errtmp=1e-1; 
         gErrd[ngent] = -log(Errtmp);
         ngent++;
       }
@@ -174,7 +189,7 @@ int fitpdf(int iPMTType, int iSK_Ver){
     // ###########################################################
     
     if (bufRang!=iRang) {// change of q range! - seed with gaussian
-//      TF1 *fprefit = new TF1("fprefit","1++x++x*x",0.,mumax);// seed with gaussian fit
+      // TF1 *fprefit = new TF1("fprefit","1++x++x*x",0.,mumax);// seed with gaussian fit
       TF1 *fprefit = new TF1("fprefit","1++x++x*x",fQChrgPDF::Get()->gmuthr[iPMTType][iRang][0]->Eval(qval),fQChrgPDF::Get()->gmuthr[iPMTType][iRang][1]->Eval(qval));// seed with gaussian fit
       
       glogPDF->Fit(fprefit,"R","");
@@ -249,19 +264,6 @@ int fitpdf(int iPMTType, int iSK_Ver){
   ((TH1D*)(hstf->Get(Form("hPunhitPar_type%d",iPMTType))))->Write();
   
   ofile->Close();// Close the file
-  
-}
-
-void GetmuThresh(double qval, double &muthrLo, double &muthrHi) {// Define thresholds of mu
-  
-  double thrw=sqrt(qval)*4.;
-  muthrLo=qval-thrw;
-  muthrHi=qval+thrw;
-  
-  if (flgUseInputThrGraph) {
-    muthrLo = gmuThrIn[0]->Eval(qval);
-    muthrHi = gmuThrIn[1]->Eval(qval);
-  }
   
 }
 
