@@ -26,7 +26,7 @@ def get_DigiHitQs_and_nHits(filename):
         DigiHits = trigger.GetCherenkovDigiHits()
         for dhit in DigiHits: Qs.append(dhit.GetQ())
         # fill nHit
-        nHit.append(trigger.GetNumTubesHit()) # same as trigger.GetNcherenkovhits()
+        nHit.append(trigger.GetNcherenkovdigihits())
 
     return np.array(Qs), np.array(nHit)
 
@@ -153,7 +153,7 @@ def main():
     
     # Save fit parameters
     th1d = ROOT.TH1D("hPunhitPar_type0", "c_n for P(unhit|#mu)", 10, 0.5, 10.5)
-    for i, par in enumerate(popt): th1d.SetBinContent(i, par)
+    for i, par in enumerate(popt, 1): th1d.SetBinContent(i, par)
     fout.WriteObject(th1d, "hPunhitPar_type0")
 
     return 
