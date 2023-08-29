@@ -11,6 +11,7 @@ from os.path   import expandvars, join, exists
 
 
 def get_fitting_function(mulow, muup):
+    """Returns function of mu to be fitted with mu bounds (mulow, muup)"""
     def func(mu, *pars):
         npars = len(pars)
         if (mulow<=mu) & (mu<=muup):

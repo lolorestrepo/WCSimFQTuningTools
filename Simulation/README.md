@@ -28,3 +28,5 @@ The procedure to create the macro files, tasks and jobs is the following:
 4) Launch the jobs through `julia launch_jobs.jl`
 
 To run the simulations interactivelly, see **Simulations/local**.
+
+**TO-DO**: add documentation about the different simulations required for the tuning files

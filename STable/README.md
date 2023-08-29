@@ -1,6 +1,10 @@
-`compute_STable.py` Computes the Scattering Table from simulation files. 
+## Scattering Table
 
-Run it by: `python compute_STable.py /path/to/files [--nbins nzs nRs nR_PMT nz_PMT nphi nzd ntheta] [--zedge zedge in cm] [--redge redge in cm] [--vaxis 0|1|2 (default 2)] [--wcsimlib /path/to/wcsimlib/] [--fitqun /path/to/fitqun/source/code/] [-v]`
+The `compute_STable.py` script computes the Scattering Table from simulation files. 
+
+First of all remember to setup ROOT (in order to be able to `import ROOT`).
+
+Run the script by: `python compute_STable.py /path/to/files [--nbins nzs nRs nR_PMT nz_PMT nphi nzd ntheta] [--zedge zedge in cm] [--redge redge in cm] [--vaxis 0|1|2 (default 2)] [--wcsimlib /path/to/wcsimlib/] [--fitqun /path/to/fitqun/source/code/] [-v]`
 
 The `/path/to/files` argument point to the directory of the simulation files. The script ignores files ending with `_flat.root`.
 
