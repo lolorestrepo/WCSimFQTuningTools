@@ -1,0 +1,17 @@
+/control/execute   $base_mac
+/WCSim/random/seed $rseed
+
+/gps/particle   $particle
+/gps/ene/type   Mono
+/gps/energy     $energy
+/gps/pos/type   Volume
+/gps/pos/shape  Cylinder
+/gps/pos/centre 0 0 0 m
+/gps/pos/halfz  136.95 cm
+/gps/pos/radius 172.05 cm
+/gps/pos/rot1   1 0 0
+/gps/pos/rot2   0 0 1
+/gps/ang/type   iso
+
+/WCSimIO/RootFile  $out_root_fname
+/run/beamOn        $nevents_per_task

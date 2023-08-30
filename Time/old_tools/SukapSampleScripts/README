@@ -1,0 +1,12 @@
+This directory contains the scripts I use to generate Time PDFs for fiTQun with WCSim geometries. The scripts are written to run on my sukap area, so they need to be modified to run anywhere else. In principle all the variables needing modification are defined close to the top of the scripts.
+
+ - runWCSimTimePDFs.sh
+   Produces a set of shell scripts that will run WCSim particle gun events with direct light only for time PDF tune. Reads chart_XX.txt files to get momentum values. The 'qsub' lines are commented out. They probably need to be changed to run on a different computing system.
+
+ - timePDF_base.mac
+   "Base" macro for generating particle gun MC. It is modified by script above for each job.
+
+ - collateTimePDFs.sh
+   Loops through chart files to collate the files generated with runWCSimTimePDFs.sh. Calls wcSimGetEntries.py and the makehistWCSim executable to produce time residuals plots.
+
+ - Once all "*_hist_sum.root" files have been produced, the root macros 'combhists.cc' and 'fittpdf.cc' should be run in the same directory as the "*_hist_sum.root" files to produce the fiTQun tune file.
