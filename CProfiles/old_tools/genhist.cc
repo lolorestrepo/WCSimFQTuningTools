@@ -81,6 +81,9 @@ int genhist(int PID){//PDG
 
         armom[nmom]=imom;
         arnphot[nmom]=wtg[nmom]->GetEntries()/nevt;
+
+        // cout << std::fixed << std::setprecision(10) << wtg[nmom]->GetEntries() << " " << nevt << " " << arnphot[nmom] << endl;
+
         wtg[nmom]->Scale(1./wtg[nmom]->GetEntries(),"width");
         wtg[nmom]->SetName(Form("g_%d_%d",PID,imom));
 

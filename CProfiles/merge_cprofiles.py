@@ -19,7 +19,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
 
     parser.add_argument( "indir", type=str, nargs=1, help = "directory containing produced files")
-    parser.add_argument(  "type", type=str, nargs=1, help = "type of cherenkov profile") # modify this, it can be tr/wt
+    parser.add_argument(  "type", type=str, nargs=1, help = "type of cherenkov profile, true (tr) or weighted (wt)") # modify this, it can be tr/wt
     
     args = parser.parse_args()
     ##########################################
@@ -44,6 +44,7 @@ def main():
 
     # loop through each energy group
     nphotons = [] # mean nphotons per energy
+    sthrs    = [] # s value at which 90% of photons are emitted per energy
     for energy, files in zip(energies, groups):
 
         if args.verbose: print(f"Processing {energy} MeV files...".ljust(50))
@@ -74,11 +75,26 @@ def main():
         for ix, iy in itertools.product(range(1, len(thbins)), range(1, len(sbins))): th2d.SetBinContent(ix, iy, h[ix-1, iy-1])
         fout.WriteObject(th2d, f"g_{energy}")
 
+        # compute s distance at which 90% of photons were emitted
+        # (needed in the parabolic approximation for the angular response)
+        sproj = h.sum(axis=0)*thbinw # projected pdf in s
+        
+        assert len(sproj) == len(sbins) - 1
+
+        scum = np.cumsum(sproj)*sbinw
+        sindex = np.argwhere(scum>0.9).flatten()[0]
+        sthrs.append((sbins[sindex] + sbins[sindex+1])/2.)
+
 
     # save mean number of photons per energy
     g = ROOT.TGraph(len(energies), energies, np.array(nphotons))
     g.SetTitle("Mean number of photons per event")
     fout.WriteObject(g, "gNphot")
+
+    # save s thresholds
+    g = ROOT.TGraph(len(energies), energies, np.array(sthrs))
+    g.SetTitle("Length of track")
+    fout.WriteObject(g, "gsthr")
 
     # close output file
     fout.Close()
