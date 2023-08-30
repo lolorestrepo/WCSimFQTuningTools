@@ -8,7 +8,7 @@ import numpy  as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
-from os.path   import expandvars, join, basename
+from os.path   import expandvars, join, basename, exists
 
 
 def get_DigiHitQs_and_nHits(filename):
@@ -49,6 +49,7 @@ def main():
     
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument( "indir", type=str, nargs=1, help = "directory containing input files")
+    parser.add_argument( "--qbins", type=str, nargs=1, help = "qbins file", default="qbins_wcte.txt")
     parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path", default="$HOME/Software/WCSim/install/lib")
     
     args = parser.parse_args()
@@ -77,7 +78,8 @@ def main():
     # loop over mu and fill histograms for each one
     Hq   = [] # 2D histogram q vs mu
     Phit = [] # hit probability
-    qbins = np.loadtxt("qbins_wcte.txt")
+    exists(args.qbins[0])
+    qbins = np.loadtxt(args.qbins[0])
     for mu, files in zip(mus, groups):
         if args.verbose: print(f"Processing mu = {mu}".ljust(50))
 
