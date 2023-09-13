@@ -6,8 +6,8 @@ import itertools
 import ROOT
 import numpy  as np
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 
+import concurrent.futures
 from os.path   import expandvars, join, basename, exists
 
 
@@ -21,7 +21,7 @@ def get_DigiHitQs_and_nHits(filename):
     Qs   = []
     nHit = []
     for event in range(nevents):
-        tree.GetEvent(0)
+        tree.GetEvent(event)
         trigger  = tree.wcsimrootevent.GetTrigger(0)
         # fill DigiHit charges
         DigiHits = trigger.GetCherenkovDigiHits()
@@ -41,6 +41,27 @@ def get_nPMTs(filename):
     tree.GetEntry(0)
     geom  = tree.wcsimrootgeom
     return geom.GetWCNumPMT()
+
+
+def process_mu(mu, files, qbins, nPMTs, verbose=False):
+    """Get q distribution and hit prob. for list of files (which are supposed to have same mu value)"""
+    if verbose: print(f"--> Processing mu = {mu}".ljust(50))
+
+    Qs = []
+    nHits = []
+    for filename in files:
+        # if verbose: print("-> ", basename(filename))
+        Qs_, nHits_ = get_DigiHitQs_and_nHits(filename)
+        Qs.extend(Qs_)
+        nHits.extend(nHits_)
+        # if verbose: print("<- ", basename(filename))
+
+    Qs = np.array(Qs)
+    Phit = np.mean(nHits) / nPMTs
+    hq, _ = np.histogram(Qs, bins=qbins, density=True)
+
+    if verbose: print(f"<-- Done for mu = {mu}".ljust(50))
+    return mu, Phit, hq
 
 
 def main():
@@ -79,33 +100,25 @@ def main():
     groups = [list(group) for key, group in itertools.groupby(infiles, key=lambda x: get_mu_and_index(x)[0])]
 
     # loop over mu and fill histograms for each one
-    Hq   = [] # 2D histogram q vs mu
-    Phit = [] # hit probability
     exists(args.qbins[0])
     qbins = np.loadtxt(args.qbins[0])
-    for mu, files in zip(mus, groups):
-        if args.verbose: print(f"Processing mu = {mu}".ljust(50))
+    results = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # parallelize
+        future_to_mu = {executor.submit(process_mu, mu, files, qbins, nPMTs, args.verbose): mu for mu, files in zip(mus, groups)}
 
-        # loop over files for each mu
-        Qs    = []
-        nHits = []
-        for filename in files:
-            print(filename)
-            Qs_, nHits_ = get_DigiHitQs_and_nHits(filename)
-            Qs   .extend(Qs_   )
-            nHits.extend(nHits_)
-        Qs = np.array(Qs)
+        # get results once all the tasks are finished
+        for future in concurrent.futures.as_completed(future_to_mu):
+            mu, Phit, hq = future.result()
+            mu = future_to_mu[future]
+            results.append((mu, Phit, hq))
 
-        # compute hit probability
-        Phit.append(np.mean(nHits)/nPMTs)
-
-        # make histogram
-        hq, _ = np.histogram(Qs, bins=qbins, density=True)
-        Hq.append(hq)
-
-    # cast to numpy arrays
-    Hq   = np.array(Hq)
-    Phit = np.array(Phit)
+    results = np.array(results, dtype=[("mu", float), ("Phit", float), ("hq", np.ndarray)])
+    results.sort(order="mu")
+    
+    # get 2D histogram and hit prob.
+    Hq   = np.vstack(results["hq"])
+    Phit = results["Phit"]
 
     # Create output file
     fout = ROOT.TFile("charge2D_and_unhit.root", "RECREATE")
@@ -121,6 +134,7 @@ def main():
                     , len(mubins)-1, mubins
                     , len(qbins) -1, qbins)
     for ix, iy in itertools.product(range(1, len(mubins)), range(1, len(qbins))): th2d.SetBinContent(ix, iy, Hq[ix-1, iy-1])
+
     # save to file
     fout.WriteObject(th2d, f"charge2D")
     
@@ -135,27 +149,6 @@ def main():
     
     # perform fit
     popt, _ = curve_fit(PUnhit_func, mus, 1.-Phit)
-
-    if args.verbose:
-        # Plot unhit probability with fit result
-        print("Plotting Unhit probability...")
-
-        plt.ion()
-
-        plt.figure()
-        plt.title("Unhit probability")
-        plt.scatter(mus, 1 - Phit, color="k")
-        x = np.linspace(0, np.max(mus), 1000)
-        plt.plot(x, PUnhit_func(x, *popt), color="r")
-        plt.xlim([None, 15])
-        plt.yscale("log")
-        plt.xlabel("Predicted charge")
-        plt.ylabel("UnHit probability")
-        plt.draw()
-
-        input("Press Enter to continue...")
-        plt.ioff()
-        plt.close()
     
     # Save fit parameters
     th1d = ROOT.TH1D("hPunhitPar", "c_n for P(unhit|#mu)", 10, 0.5, 10.5)

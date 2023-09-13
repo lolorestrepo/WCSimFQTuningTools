@@ -1,7 +1,7 @@
 /control/execute   $base_mac
 
 /mygen/pmtPoisson  true
-/mygen/poissonMean $predicted_charge
+/mygen/poissonMean $true_charge
 
 /WCSimIO/RootFile  $out_root_fname
 /run/beamOn        $nevents_per_task

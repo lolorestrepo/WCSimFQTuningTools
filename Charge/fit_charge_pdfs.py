@@ -3,11 +3,10 @@ import argparse
 import uproot
 import ROOT
 import numpy  as np
-import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
 
-from os.path   import expandvars, join, exists
+from os.path   import expandvars
 
 
 def get_fitting_function(mulow, muup):
@@ -64,7 +63,7 @@ def main():
 
     if args.verbose:
         print("-------------------------")
-        print(f"Using {len(npars)} q ranges")
+        print(f"Using {len(npars)} q-ranges")
         print("-------------------------")
         for i, n in enumerate(npars): print(f"Range {i} between [{qranges[i]}, {qranges[i+1]}] with {n} parameters")
 
@@ -82,9 +81,9 @@ def main():
     fout = ROOT.TFile(outfilename, "RECREATE")
 
     # define q fit ranges and save to output
-    hCPDFrange = ROOT.TH1D("hCPDFrange_type0", "", nqranges, np.array(qranges))
+    hCPDFrange = ROOT.TH1D("hCPDFrange", "", nqranges, np.array(qranges))
     for i, n in enumerate(npars, 1): hCPDFrange.SetBinContent(i, n)
-    fout.WriteObject(hCPDFrange, "hCPDFrange_type0")
+    fout.WriteObject(hCPDFrange, "hCPDFrange")
 
     # loop in q ranges
     # - gParams: for each range and parameter in this range: q vs parameter
@@ -122,7 +121,7 @@ def main():
             # save graph for logpdf vs mu to output file
             if len(mus_) != 0: glogpdf = ROOT.TGraph(len(mus_), mus_, logpdf)
             else:              glogpdf = ROOT.TGraph()            
-            fout.WriteObject(glogpdf, f"glogPDF_type0_Rang{rang}_{globalpi}")
+            fout.WriteObject(glogpdf, f"glogPDF_Rang{rang}_{globalpi}")
 
             # define mu thresholds
             mulow = q - 4.*np.sqrt(q)
@@ -137,43 +136,18 @@ def main():
 
             # save fitted parameters
             for par, gPar in zip(pars, gParams): gPar.SetPoint(pi, q, par)
-
-            # if (globalpi == 40):
-            #     plt.ion()
-
-            #     plt.figure()
-            #     plt.title(f"q = {q}")
-                
-            #     plt.scatter(mus_, logpdf, color="k")
-            #     x = np.linspace(0, np.max(mus_), 1000)
-            #     # x = x[(mulow<=x) & (x<=muup)]
-            #     poly = np.poly1d(np.flip(pars))
-            #     plt.plot(x, poly(x), color="r")
-
-            #     # plt.axvline(mulow, color="k")
-            #     # plt.axvline( muup, color="k")
-
-            #     plt.xlabel(r"$\mu$")
-            #     plt.ylabel("log(pdf)")
-            #     plt.draw()
-
-            #     input("Press Enter to continue...")
-            #     plt.ioff()
-            #     plt.close()
-            #     break
-
             globalpi += 1
 
         # save to output file
-        for  pari, gPar   in enumerate(gParams): fout.WriteObject(  gPar, f"gParam_type0_Rang{rang}_{pari}")
-        for bound, gmuthr in enumerate(gmuthrs): fout.WriteObject(gmuthr, f"gmuthr_type0_Rang{rang}_{bound}")
+        for  pari, gPar   in enumerate(gParams): fout.WriteObject(  gPar, f"gParam_Rang{rang}_{pari}")
+        for bound, gmuthr in enumerate(gmuthrs): fout.WriteObject(gmuthr, f"gmuthr_Rang{rang}_{bound}")
 
     # due to a bug in fiTQun, also save Rang = nqrange with empty values
     gParams = [ROOT.TGraph() for par in range(npars[rang])]
     gmuthrs = [ROOT.TGraph() for i in range(2)]
     rang = nqranges
-    for  pari, gPar   in enumerate(gParams): fout.WriteObject(  gPar, f"gParam_type0_Rang{rang}_{pari}")
-    for bound, gmuthr in enumerate(gmuthrs): fout.WriteObject(gmuthr, f"gmuthr_type0_Rang{rang}_{bound}")
+    for  pari, gPar   in enumerate(gParams): fout.WriteObject(  gPar, f"gParam_Rang{rang}_{pari}")
+    for bound, gmuthr in enumerate(gmuthrs): fout.WriteObject(gmuthr, f"gmuthr_Rang{rang}_{bound}")
 
 
     # copy PUnhit to output file (TGraph copy not implemented in uproot)
@@ -184,8 +158,8 @@ def main():
 
     # copy 2D charge histogram and PUnhit parameters to output file
     with (uproot.open(infilename) as fin, uproot.update(outfilename) as fout):
-        fout["charge2D"]         = fin["charge2D"]
-        fout["hPunhitPar_type0"] = fin["hPunhitPar_type0"]
+        fout["charge2D"]   = fin["charge2D"]
+        fout["hPunhitPar"] = fin["hPunhitPar"]
 
     return 
 

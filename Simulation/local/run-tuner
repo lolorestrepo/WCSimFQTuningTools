@@ -3,30 +3,36 @@
 source $HOME/Software/Geant4/install/bin/geant4.sh
 source $HOME/Software/ROOT/install/bin/thisroot.sh
 
-export WCSIMDIR=$HOME/WCTE/Software/WCSim/install
-export FITQUNDIR=$HOME/WCTE/Software/WCSimFQTuner/build/
+export WCSIMDIR=$HOME/Software/HK_Software/WCSim//install-Linux_x86_64-gcc_4.8.5-python_3.10.11/
+export FITQUNDIR=$HOME/Software/HK_Software/WCSimFQTuner/build/
 
 rm -rf out && mkdir -p out
 cp $WCSIMDIR/macros/daq.mac .
 cp $WCSIMDIR/macros/jobOptions.mac .
 cp $WCSIMDIR/macros/tuning_parameters.mac .
-cp $WCSIMDIR/lib/libWCSimRootDict_rdict.pcm .
+cp $WCSIMDIR/lib/libWCSimRoot_rdict.pcm .
 cp $FITQUNDIR/WCSim_FQTuner .
 
 
 if (($# != 2 && $# != 3)); then
-    echo "expected 2 or 3 arguments: vis/batch nevents"
+    echo "expected 2 or 3 arguments: macrofile vis/batch nevents"
+    rm WCSim_FQTuner
+    rm geofile_*
+    rm daq.mac
+    rm jobOptions.mac
+    rm tuning_parameters.mac
+    rm libWCSimRootDict_rdict.pcm
     exit
 fi
 
 if [ $2 = 'vis' ]; then
-    gsed '$a\/control/execute vis.mac' $1 >> temp.mac
-    gsed '$a\/run/beamOn 1' temp.mac >> temp.mac
+    sed '$a\/control/execute vis.mac' $1 >> temp.mac
+    sed '$a\/run/beamOn 1' temp.mac >> temp.mac
     mv temp.mac WCSim.mac
     ./WCSim_FQTuner
     rm WCSim.mac
 elif [ $2 = 'batch' ]; then
-    gsed "\$a\ /run/beamOn $3" $1 >> temp.mac
+    sed "\$a\ /run/beamOn $3" $1 >> temp.mac
     ./WCSim_FQTuner temp.mac
     rm temp.mac
 else
@@ -38,4 +44,4 @@ rm geofile_*
 rm daq.mac
 rm jobOptions.mac
 rm tuning_parameters.mac
-rm libWCSimRootDict_rdict.pcm
+rm libWCSimRoot_rdict.pcm
