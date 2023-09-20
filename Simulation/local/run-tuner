@@ -3,25 +3,27 @@
 source $HOME/Software/Geant4/install/bin/geant4.sh
 source $HOME/Software/ROOT/install/bin/thisroot.sh
 
-export WCSIMDIR=$HOME/Software/HK_Software/WCSim//install-Linux_x86_64-gcc_4.8.5-python_3.10.11/
-export FITQUNDIR=$HOME/Software/HK_Software/WCSimFQTuner/build/
+export WCSIMDIR=$HOME/Software/HK_Software/WCSim/install-Linux_x86_64-gcc_4.8.5-python_3.10.11/
+export TUNERDIR=$HOME/Software/HK_Software/WCSimFQTuner/install/
 
 rm -rf out && mkdir -p out
 cp $WCSIMDIR/macros/daq.mac .
 cp $WCSIMDIR/macros/jobOptions.mac .
 cp $WCSIMDIR/macros/tuning_parameters.mac .
-cp $WCSIMDIR/lib/libWCSimRoot_rdict.pcm .
-cp $FITQUNDIR/WCSim_FQTuner .
+cp $WCSIMDIR/lib/*.pcm .
+cp $TUNERDIR/bin/WCSim_FQTuner .
 
+source $WCSIMDIR/setup.sh
 
 if (($# != 2 && $# != 3)); then
     echo "expected 2 or 3 arguments: macrofile vis/batch nevents"
     rm WCSim_FQTuner
+    rm temp.mac
     rm geofile_*
     rm daq.mac
     rm jobOptions.mac
     rm tuning_parameters.mac
-    rm libWCSimRootDict_rdict.pcm
+    rm *.pcm
     exit
 fi
 
@@ -44,4 +46,4 @@ rm geofile_*
 rm daq.mac
 rm jobOptions.mac
 rm tuning_parameters.mac
-rm libWCSimRoot_rdict.pcm
+rm *.pcm

@@ -1,4 +1,0 @@
-/control/execute   ../templates/charge_base.mac
-/mygen/pmtPoisson  true
-/mygen/poissonMean 3.0
-/WCSimIO/RootFile  out/out.root

@@ -1,7 +1,0 @@
-/control/execute   ../templates/cprofile_base.mac
-
-/WCSim/random/seed 100
-/gun/particle      mu-
-/gun/energy        1100 MeV
-/gun/direction     0 0 1
-/WCSimIO/RootFile  out/out.root

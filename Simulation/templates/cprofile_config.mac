@@ -1,7 +1,7 @@
 /control/execute   $base_mac
 /WCSim/random/seed $rseed
 /gun/particle      $particle
-/gun/energy        $energy MeV
+/gun/momentumAmp   $momentum MeV
 /gun/direction     0 0 1
 /WCSimIO/RootFile  $out_root_fname
 /run/beamOn        $nevents_per_task

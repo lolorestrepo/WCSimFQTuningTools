@@ -2,7 +2,7 @@
 /tracking/verbose 0
 /hits/verbose 0
 
-/WCSim/WCgeom Cylinder_60x74_20inchBandL_14perCent
+/WCSim/WCgeom Cylinder_12inchHPD_15perCent
 /WCSim/PMT/ReplicaPlacement true
 /WCSim/PMT/PositionVariation 0 mm
 /WCSim/PMT/TankRadiusChange 0 0 0 mm
