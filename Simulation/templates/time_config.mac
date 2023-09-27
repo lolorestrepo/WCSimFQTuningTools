@@ -3,7 +3,7 @@
 
 /gps/particle   $particle
 /gps/ene/type   Mono
-/gps/energy     $energy
+/gps/energy     $energy MeV
 /gps/pos/type   Volume
 /gps/pos/shape  Cylinder
 /gps/pos/centre 0 0 0 m

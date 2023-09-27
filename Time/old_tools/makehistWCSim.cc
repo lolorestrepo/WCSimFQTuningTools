@@ -273,9 +273,11 @@ int main(int argc, char* argv[]){
   }
 
 
-  TFile *ofile = new TFile(ntplFile + "_hist.root", "RECREATE");
+  TFile *ofile = new TFile("out_hist.root", "RECREATE");
   htimepdf.Write();
   delete ofile;
+
+  std::cout << "out_hist.root" << std::endl;
 
 
 }

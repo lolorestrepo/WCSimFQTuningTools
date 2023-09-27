@@ -1,26 +1,22 @@
-export FITQUN_ROOT=/pbs/home/g/gdiazlop/Software/fiTQun/fiTQun
-export WCSIMDIR=/pbs/home/g/gdiazlop/Software/WCSim/install/
-
-
 #ifndef ATMPD_ROOT
 #	ATMPD_ROOT=$(FITQUN_ROOT)
 #endif
 
 #include $(ATMPD_ROOT)/config.gmk
-include $(FITQUN_ROOT)/config.gmk
+include $(FITQUN_ROOT)/../config.gmk
 #
 #  Objects
 #
 
-LOCAL_LIBS = -lfiTQun -lWCSim
+LOCAL_LIBS = -lfiTQunLib -lWCSimRoot
 ROOTLIBS  := $(shell root-config --glibs) -lTreePlayer -lMinuit
 
 OBJS =
 LOCAL_INC = 
 #LOCAL_INC += -I$(ATMPD_ROOT)/src/recon/fitqun
-LOCAL_INC += -I$(FITQUN_ROOT) -I$(WCSIMDIR)/include
+LOCAL_INC += -I$(FITQUN_ROOT)/../ -I$(WCSIMDIR)/include/WCSim
 #LOCAL_INC += -I$(SKOFL_ROOT)/include
-LDLIBS += -L$(FITQUN_ROOT) -L$(WCSIMDIR)/lib
+LDLIBS += -L$(FITQUN_ROOT)/lib -L$(WCSIMDIR)/lib
 SITE_DEFINES += -DHEMI_CUDA_DISABLE
 
 
