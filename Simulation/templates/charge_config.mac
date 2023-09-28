@@ -1,5 +1,5 @@
 /control/execute   $base_mac
-
+/WCSim/random/seed $rseed
 /mygen/pmtPoisson  true
 /mygen/poissonMean $true_charge
 
