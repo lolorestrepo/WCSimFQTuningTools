@@ -95,7 +95,7 @@ int main(int argc, char* argv[]){
   }
 
   WCSimRootGeom    * geomWCSim = wc->Geo();
-  
+
   int iPID;
   int fLoadflg[nPID];
   for (iPID = 0; iPID < nPID; iPID++) fLoadflg[iPID] = 0;
@@ -129,13 +129,13 @@ int main(int argc, char* argv[]){
   //  fiTQun_shared::Get()->SetWAttL(6800.);
 
   //  thefit->SetWAttL(6800.); // comented out by tyoshida
-  fqshared->SetWAttL(6800.); //tyoshida
+  // fqshared->SetWAttL(6800.); //tyoshida
 
   //  thefit->SetQEEff(0.1); // comented out by tyoshida
-  fqshared->SetQEEff(0.1); // comented out by tyoshida
+  // fqshared->SetQEEff(0.1); // comented out by tyoshida
 
   //  thefit->SetPhi0(-1,1.);//remove dependence on tuning const. // comented out by tyoshida
-  fqshared->SetPhi0(-1.,1.);
+  // fqshared->SetPhi0(-1.,1.);
 
 
   // Get true momentum
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]){
   double smid=smax/2.;
   std::cout << "p=" << mom << "MeV/c, smid: " << smid << std::endl;
   
-  TH2D htimepdf("htimepdf","",400,-100,100,125,-2.,3.);
+  TH2D htimepdf("htimepdf","",200, -10, 10, 125, -2., 3.);
 
   htimepdf.Sumw2();
 
@@ -215,6 +215,8 @@ int main(int argc, char* argv[]){
 
     // Set momentum
     TrkParam[6] = trackWCSim->GetP();
+
+    // for(int a = 0; a <=6; a++){ cout << "TrkParam " << a << " " << TrkParam[a] << endl;}
     
     // Again ...
     if (fCG) TrkParam[6]/=10.;
@@ -234,22 +236,18 @@ int main(int argc, char* argv[]){
 
     double trigOffset = trigWCSim->GetHeader()->GetDate();
 
-    //    std::cout << "PCflg" << PCflg << " fPCflcgut" << fPCflcgut << std::endl;
+    std::cout << "PCflg " << PCflg << " fPCflcgut " << fPCflcgut << std::endl;
+
     if (PCflg == 0 || fPCflcgut == 0) {//FC event
      
-      //      std::cout << "Ndigihits" << trigWCSim->GetNcherenkovdigihits() <<std::endl;
+      std::cout << "Ndigihits " << trigWCSim->GetNcherenkovdigihits() <<std::endl;
 
       for (int ih = 0; ih < trigWCSim->GetNcherenkovdigihits(); ih++){
         WCSimRootCherenkovDigiHit * digiHit = dynamic_cast<WCSimRootCherenkovDigiHit*>( trigWCSim->GetCherenkovDigiHits()->At(ih) );
 
         int icab = digiHit->GetTubeId()-1;
-        //	cout << "trigWCSim->GetCherenkovHits()->GetEntries() " << trigWCSim->GetCherenkovHits()->GetEntries()  << " trigWCSim->GetCherenkovHitTimes()->GetEntries() " << trigWCSim->GetCherenkovHitTimes()->GetEntries() << endl;
 
         WCSimRootPMT pmtObj = geomWCSim->GetPMT(icab);
-
-        //	cout << " digiHit->GetTubeId() " << digiHit->GetTubeId() << " pmtObj.GetTubeNo() " << pmtObj.GetTubeNo() << endl;
-        
-        //	if (icab <= 1 || icab >=11145) cout << icab << endl;
         
         TVector3 wcPmtPos(pmtObj.GetPosition(0), pmtObj.GetPosition(1), pmtObj.GetPosition(2));
 
@@ -262,8 +260,6 @@ int main(int argc, char* argv[]){
         double tc = digiHit->GetT() - aSubToffs - RmidPMT*nwtr/c0 - smid/c0;
 
         // Fill histogram
-        //	std::cout << "tc" << tc <<" logmu" << log10(muarr[icab]) << std::endl;
-
         htimepdf.Fill(tc,log10(muarr[icab]));
       }
     }
@@ -273,12 +269,12 @@ int main(int argc, char* argv[]){
   }
 
 
-  TFile *ofile = new TFile("out_hist.root", "RECREATE");
+  int p = 1000;
+  TFile *ofile = new TFile(Form("%d_%d_hist_sum.root",fiTQun_shared::PIDarr[iPID],p), "RECREATE");
   htimepdf.Write();
   delete ofile;
 
-  std::cout << "out_hist.root" << std::endl;
-
+  std::cout << Form("%d_%d_hist_sum.root",fiTQun_shared::PIDarr[iPID],p) << std::endl;
 
 }
   

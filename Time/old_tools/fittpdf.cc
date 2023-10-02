@@ -11,6 +11,10 @@
 #include <TFile.h>
 #include <TMath.h>
 
+#include <TF1.h>
+#include <TFitResult.h>
+#include <TFitResultPtr.h>
+
 using namespace std;
 
 const int nthrdpars=10;//number of momentum fit parameters
@@ -31,15 +35,15 @@ Double_t emg(Double_t *x, Double_t *par){
 }
 
 TString PolyFormula(int nord) {
-  TString strPoly="1++x";
+  TString strPoly="[0]+[1]*x";
   for (int i=2; i<=nord; i++) {
-    strPoly+=Form("++x^%d",i);
+    strPoly+=Form("+[%d]*x^%d",i,i);
   }
   
   return strPoly;
 }
 
-int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
+void fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
 
   TFitResultPtr ptrres[2],ptrprres[2];
   const int nmommax=200;
@@ -53,12 +57,13 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
   TH1D *hmeantmp,*hsigmtmp, *hchi2tmp;
   TH2D *hist2d;
   TGraphErrors *gtpar[2][npars];
+  int ntmp;
   
   double pofst=0.;
   if (PID==11) {
-    momfitrang[0]=20.;
-    momfitrang[1]=5000.;
-    pofst=-20.;
+    momfitrang[0]=100.;
+    momfitrang[1]=1000.;
+    pofst=0.;
   }
   else if (PID==13) {
     momfitrang[0]=180.;
@@ -119,100 +124,31 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
   if (PID==13) nmom = 24;
   if (PID==211) nmom = 24;
 
+  // For each momentum: 
+  //     Step 0) Gaussian fit of t-residual for each log10(mu)
+  //     Step 1) Polynomial fit of mean and sigma vs log10(mu)
   for (int k=0; k<nmom; k++) {
-    int imom=(int)(h3d->GetZaxis()->GetBinLowEdge(k+1)+0.5);
-    cout << imom << endl;
+    // int imom=(int)(h3d->GetZaxis()->GetBinLowEdge(k+1)+0.5);
+    int imom=(int)(h3d->GetZaxis()->GetBinCenter(k+1));
+    cout << "############################" << endl;
+    cout << "MOM=" << imom << endl;
+    cout << "############################" << endl;
     armom[k]=imom;
     if (flogfit) armom[k]=log(armom[k]-pofst);
     h3d->GetZaxis()->SetRange(k+1,k+1);
     hist2d = (TH2D*)h3d->Project3D("yx");
-    hist2d->FitSlicesX();
+    hist2d->FitSlicesX(); //Step 0) Gaussian fit of t-residual for each log10(mu)
     hmeantmp = (TH1D*)gDirectory->Get("hist_tpdf_yx_1");
     hsigmtmp = (TH1D*)gDirectory->Get("hist_tpdf_yx_2");
     hchi2tmp = (TH1D*)gDirectory->Get("hist_tpdf_yx_chi2");
-    int ntmp=hmeantmp->GetNbinsX();
+    ntmp=hmeantmp->GetNbinsX();
 
     if(useFitSlices){
       for (int muBin = 1; muBin <= ntmp; muBin++){
         hmean_step0->SetBinContent( k+1,muBin,hmeantmp->GetBinContent(muBin));
-	hsigm_step0->SetBinContent( k+1,muBin,hsigmtmp->GetBinContent(muBin));
+        hsigm_step0->SetBinContent( k+1,muBin,hsigmtmp->GetBinContent(muBin));
       }
-    }else{
-      // And now, let's fit again, but with sensible starting points
-      for (int muBin = 1; muBin <= ntmp; muBin++){
-	TH1D* hist1d = (TH1D*) hist2d->ProjectionX("projx", muBin, muBin);
-	
-	if (hist1d->GetEntries() == 0.) {
-	  hmeantmp->SetBinContent(muBin, 0.);
-	  hsigmtmp->SetBinContent(muBin, 0.);
-	  hchi2tmp->SetBinContent(muBin, 0.);
-	  continue;
-	}
-	
-	myGausFit->SetParameter(0, 0.1);
-	myGausFit->SetParameter(1, 0.);
-	//      myGausFit->SetParLimits(1, tcmin*0.5, tcmax*0.5);
-	myGausFit->SetParameter(2, 5.);
-
-	if (useEMG){
-	  fEMG->SetParameter(0, 0.1);
-	  fEMG->SetParameter(1, 0.);
-	  fEMG->SetParameter(2, 5.);
-	  fEMG->SetParameter(3, 5.);
-	}
-	
-	//	timeResFitPointer = hist1d->Fit("gaus", "S", "");
-	///      timeResFitPointer = hist1d->Fit("myGausfit", "S", "",  hist1d->GetMean()-hist1d->GetRMS(), hist1d->GetMean()+hist1d->GetRMS());
-	//	timeResFitPointer = hist1d->Fit("myGausfit", "S", "",  hist1d->GetRMS(), hist1d->GetRMS()/2);
-	timeResFitPointer = hist1d->Fit("myGausfit", "S", "",  tcmin, tcmax);
-	
-	int goodFit = timeResFitPointer;
-	
-	if (shiftLeft == true && goodFit == 0){
-
-	  double lowRange = tcmin;
-	  double hiRange = timeResFitPointer->Parameter(1)+1.0*timeResFitPointer->Parameter(2);
-	  
-	  std::cout << "Shifting left. New fit range: " << lowRange < < " " << hiRange << std::endl;
-	  
-	  timeResFitPointer = hist1d->Fit("myGausfit", "S", "", lowRange, hiRange);
-
-	  goodFit = timeResFitPointer;
-	}
-
-	if (useEMG){
-	  timeResFitPointer = hist1d->Fit("fEMG", "S", "", tcmin, tcmax);
-	  goodFit = timeResFitPointer;
-	}
-	
-	if (goodFit == 0){
-	  hmeantmp->SetBinContent(muBin, timeResFitPointer->Parameter(1));
-	  hsigmtmp->SetBinContent(muBin, timeResFitPointer->Parameter(2));
-	  if (timeResFitPointer->Ndf()) hchi2tmp->SetBinContent(muBin, timeResFitPointer->Chi2()/timeResFitPointer->Ndf());
-	  else  hchi2tmp->SetBinContent(muBin, 0.);
-	} else {
-	  
-	  cout << "BAD STEP0 FIT " << muBin << " " << k << endl;
-	  hmeantmp->SetBinContent(muBin, 0.);
-	  hsigmtmp->SetBinContent(muBin, 0.);
-	  hchi2tmp->SetBinContent(muBin, 0.);
-	  
-	  //	exit(-3);
-	}
-	
-	hmean_step0->SetBinContent( k+1,muBin, 0.);
-	hsigm_step0->SetBinContent( k+1,muBin, 0.);
-	hmean_step1->SetBinContent( k+1,muBin, 0.);
-	hsigm_step1->SetBinContent( k+1,muBin, 0.);
-	
-	if (goodFit == 0){
-	  // Save fit step 0 results
-	  hmean_step0->SetBinContent( k+1,muBin, timeResFitPointer->Parameter(1));
-	  hsigm_step0->SetBinContent( k+1,muBin, timeResFitPointer->Parameter(2));
-	}
-	delete hist1d;
-      }
-    }
+    }else{ cout << "removed by Gonzalo to simplify code" << endl; exit(-1);}
 
     for (int ibin=1; ibin<=ntmp; ibin++) {
       double dtmp=hmeantmp->GetBinContent(ibin);
@@ -228,15 +164,16 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
     hmnsg[0][k]->SetName(Form("hmean_%d",imom));
     hmnsg[1][k]->SetName(Form("hsigm_%d",imom));
 
+    // Step 1) Polynomial fit of mean and sigma vs log10(mu)
     for (int idx=0; idx<2; idx++) {
-      ptrres[idx]=hmnsg[idx][k]->Fit(PolyFormula(npars-1).Data(),"S");
+      ptrres[idx]=hmnsg[idx][k]->Fit(Form("pol%d", npars-1),"SQ");
       int ires=ptrres[idx];
-      cout << ptrres[idx]->Ndf() << endl;
+      // cout << ptrres[idx]->Ndf() << endl;
       if (ires) {
         cout << "Fit abnormally terminated!!! ires: " << ires << " idx " << idx << " imom " << imom <<  endl;
         exit(-1);
       } else if (ptrres[idx]->Chi2()/ptrres[idx]->Ndf() > 25.){
-	cout << "Bad fiT! ires: " << ires << " idx " << idx << " imom " << imom << " chi2/ndf " << (ptrres[idx]->Chi2()/ptrres[idx]->Ndf()) <<  endl;
+        cout << "Bad fiT! ires: " << ires << " idx " << idx << " imom " << imom << " chi2/ndf " << (ptrres[idx]->Chi2()/ptrres[idx]->Ndf()) <<  endl;
       }
     }
     
@@ -248,7 +185,6 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
       //        cout << arpar[0][i][k] << ", " << arpar[1][i][k] << endl;
     }
   }
-//  exit(-1);
 
   // Save fit step 1 results
   for (int k = 0; k < nmom; k++){
@@ -257,15 +193,19 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
       double testSigma = 0.;
       double mupow = 1.;
       for (int i = 0; i < npars; i++){
-	testMean += arpar[0][i][k]*mupow;
-	testSigma += arpar[1][i][k]*mupow;
-	mupow *= hmeantmp->GetXaxis()->GetBinLowEdge(muBin);
+        testMean += arpar[0][i][k]*mupow;
+        testSigma += arpar[1][i][k]*mupow;
+        mupow *= hmeantmp->GetXaxis()->GetBinLowEdge(muBin);
       }
       hmean_step1->SetBinContent( k+1,muBin, testMean);
       hsigm_step1->SetBinContent( k+1,muBin, testSigma);
     }
   }
   
+  cout << "############################" << endl;
+  cout << "FIT FOR EACH MOMENTUM DONE"   << endl;
+  cout << "############################" << endl;
+
   TFile *fout = new TFile(Form("%d_tpdfpar.root",PID),"RECREATE");
   
   TH2D *htpdfpar[2];
@@ -276,7 +216,9 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
   if (!(momfitrang[1]<armom[nmom-1])) momfitrang[1]=armom[nmom-1];
   
   for (int i=0; i<npars; i++) {
-    cout << "i  " << i << endl;
+    cout << "############################" << endl;
+    cout << "PAR  " << i << endl;
+    cout << "############################" << endl;
     for (int idx=0; idx<2; idx++) {
       if (fNoErrorbars) {
         gtpar[idx][i] = new TGraphErrors(nmom,armom,arpar[idx][i],NULL,NULL);
@@ -297,7 +239,7 @@ int fittpdf(int PID, bool flogfit=false, bool fNoErrorbars=true){
           exit(-1);
         }
         
-        ptrprres[idx]=gtpar[idx][i]->Fit(PolyFormula(nthrdtmp-1).Data(),"S","",momfitrang[0],momfitrang[1]);
+        ptrprres[idx]=gtpar[idx][i]->Fit(Form("pol%d", nthrdtmp-1),"SQ","",momfitrang[0],momfitrang[1]);
         ires=ptrprres[idx];
         
       } while (ires);

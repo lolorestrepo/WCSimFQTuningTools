@@ -22,4 +22,5 @@
 	cd -
 	./makehistWCSim $HOME/Software/HK_Software/WCSimFQTuningTools/Simulation/local/out/out.root ./WCTE_Parameters.dat
 
-2)
+2) Run it for several energies and then run combhists.cc macro
+3) Fits with fitpdf.cc macro

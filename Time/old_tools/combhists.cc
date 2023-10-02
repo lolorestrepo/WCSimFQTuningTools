@@ -54,5 +54,7 @@ int combhists(int PID){
   h3d->Write();
   
   delete fout;
+
+  return 0;
   
 }

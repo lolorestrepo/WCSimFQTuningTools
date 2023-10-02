@@ -39,7 +39,7 @@
  < fiTQun.RCCut1Mua0WCSim = 0. >
 
  < fiTQun.DoBiasCorrection = 0 > Set to 1 if you want to apply empirical bias corrections to fit results
- < fiTQun.UseScatteredLight = 1 > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
+ < fiTQun.UseScatteredLight = 0 > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
  < fiTQun.TotalChargeConstraintWeight = 4 > Weight of the total charge constraint term in the likelihood function.
  < fiTQun.UseTimeLikelihood = 1 > Set to 1 to use time likelihoods
 
