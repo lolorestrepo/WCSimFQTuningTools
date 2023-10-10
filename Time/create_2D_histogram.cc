@@ -29,8 +29,8 @@ int main(int argc, char* argv[]){
 
   //////////////////// Read arguments
   /////////////////////////////////////////////
-  if (argc<3) {
-    cout << "Wrong number of arguments, at least 2 arguments are required:" << endl;
+  if (argc<4) {
+    cout << "Wrong number of arguments, at least 3 arguments are required:" << endl;
     cout << "infile" << endl;
     cout << " " << endl;
     exit(-1);
@@ -41,27 +41,30 @@ int main(int argc, char* argv[]){
   if (!fs::exists(indirectory)) { cout << "Input directory does not exists" << endl; exit(-1);}
   cout << "Input directory: " << argv[1] << ";" << indirectory << endl;
 
+  // Read particle type
+  string particle = argv[2];
+
   // Read parameters filename
-  char* parameters_filename = argv[2];
+  char* parameters_filename = argv[3];
   if (!fs::exists(parameters_filename)) { cout << "Parameters file not found" << endl; exit(-1);}
-  cout << "Parameters file: " << argv[2] << ";" << parameters_filename << endl;
+  cout << "Parameters file: " << parameters_filename << endl;
 
   // Read water refractive index
   double n_water;
-  if (argc>3) { n_water = atof(argv[3]); cout << "Water refractive index set to: " << n_water << endl;}
+  if (argc>4) { n_water = atof(argv[4]); cout << "Water refractive index set to: " << n_water << endl;}
   else        { n_water = 1.38;          cout << "Water refractive index set to default: " << n_water << endl;}
 
   // Read vertical axis and define rotation matrix
   int vaxis;
   TRotation R = TRotation();
-  if (argc>4) { vaxis = atoi(argv[4]); cout << "Rotating detector vertical axis  " << vaxis << endl;}
+  if (argc>5) { vaxis = atoi(argv[5]); cout << "Rotating detector vertical axis  " << vaxis << endl;}
   else        { vaxis = 2            ; cout << "Detector vertical axis unrotated "          << endl;}
   if ((vaxis<0) & (2<vaxis)){ cout << "Invalid vertical axis" << endl; exit(-1);}
   if      (vaxis == 0) { R.RotateY(3.*pi/2.);}
   else if (vaxis == 1) { R.RotateX(pi/2.);}
 
   // Read histogram binning
-  if ((5<argc)&(argc<11)){ 
+  if ((6<argc)&(argc<12)){ 
     cout << "Wrong number of arguments for histogram binning, you must set the four arguments: nx xlow xupp ny ylow yupp" << endl;
     exit(-1);
   }
@@ -72,15 +75,14 @@ int main(int argc, char* argv[]){
   int    n_trueq   = 125;
   double trueq_low = -2;
   double trueq_upp = 3;
-  if (argc == 11){
-    n_tres    = atoi(argv[5]);
-    tres_low  = atof(argv[6]);
-    tres_upp  = atof(argv[7]);
-    n_trueq   = atoi(argv[8]);
-    trueq_low = atof(argv[9]);
-    trueq_upp = atof(argv[10]);
+  if (argc == 12){
+    n_tres    = atoi(argv[6]);
+    tres_low  = atof(argv[7]);
+    tres_upp  = atof(argv[8]);
+    n_trueq   = atoi(argv[9]);
+    trueq_low = atof(argv[10]);
+    trueq_upp = atof(argv[11]);
   }
-
 
   /////////////////////////////////////////////
   /////////////////////////////////////////////
@@ -92,7 +94,7 @@ int main(int argc, char* argv[]){
   double energy;
   int index;
   // Define regular expresion to match filenames
-  regex filename_pattern("out_e-_(-?\\d+(?:\\.\\d+)?)_(\\d+)\\.root");
+  regex filename_pattern("out_" + particle + "_(-?\\d+(?:\\.\\d+)?)_(\\d+)\\.root");
 
   string directory_path = "/sps/t2k/gdiazlop/Time/out/";
 
@@ -116,7 +118,7 @@ int main(int argc, char* argv[]){
   }
 
   // Load fiTQun parameters
-  TRuntimeParameters::Get().ReadParamOverrideFile(argv[2]);
+  TRuntimeParameters::Get().ReadParamOverrideFile(parameters_filename);
   // Define needed fiTQun variables
   int PID_index = -1;
   int load_flag[nPID] = {0};
