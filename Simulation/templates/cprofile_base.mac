@@ -3,23 +3,7 @@
 /hits/verbose 0
 
 /WCSim/WCgeom Cylinder_12inchHPD_15perCent
-/WCSim/PMT/ReplicaPlacement true
-/WCSim/PMT/PositionVariation 0 mm
-/WCSim/PMT/TankRadiusChange 0 0 0 mm
-/WCSim/PMT/PositionFile mPMT-configfiles/mPMTconfig_Position_WCTE.txt
 /WCSim/Construct
-
-/WCSim/PMTQEMethod     SensitiveDetector_Only
-
-/WCSim/PMTCollEff on
-/WCSim/SavePi0 false
-
-/DAQ/Digitizer SKI
-/DAQ/Trigger NDigits
-
-/control/execute daq.mac
-
-/DarkRate/SetDarkMode 0
 
 /fqTune/mode cherenkovProfile
 

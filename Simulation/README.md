@@ -4,7 +4,7 @@ This directory contains scripts to generate and run the simulations.The simulati
 
 The simulations are configured by the `config.jl` file, with the parameters described below:
 
-- **fqtunerdir, wcsimdir, g4dir, condadir, rootdir**: paths to the diferent software components needed to run the simulations. The **condadir** might not be needed if your **ROOT** instalation does not depend on a specific conda environment. In the **task_template** provided with this repository, it is assumed that **ROOT** was instaled using a conda environment named **wcte**.
+- **fqtunerdir, wcsimdir, g4dir, rootdir**: paths to the diferent software components needed to run the simulations. In the **task_template** provided with this repository, it is assumed that **ROOT** was instaled using a conda environment named **wcte**.
 
 - **prod_basedir**: directory where macro, task, job and simulation output files are saved.
 

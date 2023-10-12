@@ -24,9 +24,9 @@ jobtemplate = replace(jobtemplate, "NTASKS" => ntasks_per_job)
 # iterate over taskfile partitions and create jobs
 for taskfiles in Iterators.partition(task_files, ntasks_per_job)
     
-    # compute taskid of the first partition file
-    s = sorter(taskfiles[1])
-    jobid = join([string(v) for v in s], "_")
+    # compute taskid of the first partition
+    # assumes task files are named task_var1_var2_..._varN.sh
+    jobid = basename(taskfiles[1])[6:end-3]
 
     # add line for each task 
     tasks = ""

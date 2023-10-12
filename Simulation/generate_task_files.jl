@@ -21,7 +21,6 @@ replace( tasktemplate
        , "FQTUNER_INSTALLDIR" => abspath(fqtunerdir)
        , "WCSIM_INSTALLDIR"   => abspath(wcsimdir)
        , "G4_INSTALLDIR"      => abspath(g4dir)
-       , "CONDA_INSTALLDIR"   => abspath(condadir)
        , "ROOT_INSTALLDIR"    => abspath(rootdir))
 
 for macrofile in macro_files

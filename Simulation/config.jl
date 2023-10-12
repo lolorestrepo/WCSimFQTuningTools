@@ -1,30 +1,36 @@
 module Parameters
 
-       export fqtunerdir, wcsimdir, g4dir, condadir, rootdir, prod_basedir
+       export fqtunerdir, wcsimdir, g4dir, rootdir, prod_basedir
        export verbose, nevents_per_task, nsubtasks, ntasks_per_job
        export base_mac, config_mac, task_template, job_template
        export config_variables, queue_command, max_jobs_queue
 
-       fqtunerdir   = "$(ENV["HOME"])/Software/WCSimFQTuner/build"
-       wcsimdir     = "$(ENV["HOME"])/Software/WCSim/install"
-       g4dir        = "$(ENV["HOME"])/Software/Geant4/install"
-       condadir     = "$(ENV["HOME"])/Software/miniconda3"
-       rootdir      = "$(ENV["HOME"])/Software/ROOT/install"
-       prod_basedir = "$(ENV["LUSTRE"])/Charge/"
+       softdir = "$(ENV["HOME"])/Software/"
+
+       fqtunerdir   = "$(softdir)/HK_Software/WCSimFQTuner/install"
+       wcsimdir     = "$(softdir)/HK_Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13"
+       g4dir        = "$(softdir)/Geant4/install"
+       rootdir      = "$(softdir)/ROOT/install"
+       prod_basedir = "$(ENV["LUSTRE"])/CProfiles/"
 
        verbose           = true
        nevents_per_task  = 50
-       nsubtasks         = 5
-       ntasks_per_job    = 5
-       base_mac          = abspath("templates/charge_base.mac")
-       config_mac        = abspath("templates/charge_config.mac")
+       nsubtasks         = 100
+       ntasks_per_job    = 10
+       base_mac          = abspath("templates/cprofile_base.mac")
+       config_mac        = abspath("templates/cprofile_config.mac")
        task_template     = abspath("templates/task_template.sh")
        job_template      = abspath("templates/job_template.sh")
 
-       # config_variables  = Dict( "energy"   => range(100, 1000, step=10)
-       #                         , "particle" => ["e-"])
+       config_variables  = Dict( "momentum" => range(100, 1000, step=10)
+                               , "particle" => ["e-"])
        # config_variables = Dict( "particle" => ["e-"])
-       config_variables = Dict("predicted_charge" => vcat(range(1, 9), range(10, 19, step=2), range(20, 50, step=5)))
+       # config_variables = Dict( "true_charge" => vcat( range(0.1, 1.9, step=0.1)
+       #                                               , range(2.0, 4.5, step=0.5)
+       #                                               , range(5.0, 9.0, step=1)
+       #                                               , range(  10, 19, step=2)
+       #                                               , range(  20, 50, step=5)))
+       # config_variables = Dict("particle" => ["e-"], "energy" => range(100, 1000, step=100))
 
        queue_command  = pipeline(`squeue -ah`, `wc -l`)
        max_jobs_queue = 100

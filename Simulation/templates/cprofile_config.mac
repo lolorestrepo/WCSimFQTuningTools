@@ -3,5 +3,6 @@
 /gun/particle      $particle
 /gun/momentumAmp   $momentum MeV
 /gun/direction     0 0 1
+/gun/position      0 0 0
 /WCSimIO/RootFile  $out_root_fname
 /run/beamOn        $nevents_per_task
