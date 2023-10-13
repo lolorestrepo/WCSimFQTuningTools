@@ -8,7 +8,7 @@ In fiTQun, the angular response factor is $\epsilon(\eta)$, and to compute it we
     First of all remember to setup ROOT (in order to be able to `import ROOT`), then run it through:
     `python compute_angular_responses.py [-v] [--nbins Rnbins etanbins] [--vaxis 0|1|2 (default 2)] [--zedge activeLength] [--redge activeRad] [--wcsimlib [WCSIMLIB]] indir`
 
-    where `nbins` are the number of bins for each dimension of the histogram; `vaxis` is the vector component of the vertical axis (ie 0: X, 1: Y, 2: Z); `zedge` and `redge` represent the vertical and horizontal active area of the detector in cm (ie length and radious); `wcsimlib` is the directory of the WCSim library; and `indir` is the directory containing the input files.
+    where `nbins` are the number of bins for each dimension of the histogram; `vaxis` is the vector component of the vertical axis (ie 0: X, 1: Y, 2: Z); `zedge` and `redge` represent the vertical (half) and horizontal active area of the detector in cm (ie half-length and radius); `wcsimlib` is the directory of the WCSim library; and `indir` is the directory containing the input files.
 
 
 2) Compute the angular response function $\epsilon (\eta)$. Taken into account that $\Omega (R=0) = 1,~ T(R=0) = 1$, the angular response is computed using the values of the first radial bin in the 2D histogram. The values are fitted using a polynomial function and saved to the output file. 

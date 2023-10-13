@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument( "-i", "--infile", type=str, nargs="?", help = "", default="cprofiles_integrals.root")
 
-    parser.add_argument(  "npars", type=int  , nargs=1, help = "")
+    parser.add_argument( "npars", type=int, nargs=1, help = "")
     
     args = parser.parse_args()
     ##########################################
@@ -44,7 +44,7 @@ def main():
 
         if args.verbose: print(f"Fitting n={n}...")
 
-        h, r0bins, th0bins, ebins = fin[f"I_{n}"].to_numpy()
+        h, r0bins, th0bins, mbins = fin[f"I_{n}"].to_numpy()
 
         th3d = ROOT.TH3D( f"Js_{n}", f"Js_{n}"
                         ,  len(r0bins)-1,  r0bins
@@ -60,8 +60,8 @@ def main():
                               ,  len(r0bins)-1,  r0bins
                               , len(th0bins)-1, th0bins)
 
-        # fit I_n vs log(E)
-        log_energies = np.log((ebins[1:] + ebins[:-1])/2.)
+        # fit I_n vs log(p)
+        log_momenta = np.log((mbins[1:] + mbins[:-1])/2.)
 
         # loop over r0 and th0 bins
         for th0bin, _ in enumerate(th0bins[:-1], 0):
@@ -69,17 +69,17 @@ def main():
                 # get integrals for (r0, th0) bins
                 I = h[r0bin, th0bin]
                 # polynomial fit
-                js = np.polyfit(log_energies, I, npars-1)
+                js = np.polyfit(log_momenta, I, npars-1)
 
                 # fill 3D histogram with results
                 for i, ji in enumerate(np.flip(js), 1): th3d.SetBinContent(r0bin+1, th0bin+1, i, ji)
                 # save bounds (to be fiTQun compatible)
-                th3d.SetBinContent(r0bin+1, th0bin+1, npars+1, log_energies[0])
-                th3d.SetBinContent(r0bin+1, th0bin+1, npars+2, log_energies[-1])
+                th3d.SetBinContent(r0bin+1, th0bin+1, npars+1, log_momenta[0])
+                th3d.SetBinContent(r0bin+1, th0bin+1, npars+2, log_momenta[-1])
 
                 # compute and save chi2
                 p = np.poly1d(js)
-                chi2 = sum((p(log_energies) - I)**2)
+                chi2 = sum((p(log_momenta) - I)**2)
                 th2d_chi2.SetBinContent(r0bin+1, th0bin+1, chi2)
 
                 # save 1 in nsect histo (to be fiTQun compatible)
@@ -95,8 +95,8 @@ def main():
     hprofinf.SetBinContent(2, 50)   # nsectmax, hardcoded (?), not really used in fiTQun
     hprofinf.SetBinContent(3, 0)    # momentum ofset
     hprofinf.SetBinContent(4, 0.2)  # momentum min step, hardcoded (?)
-    hprofinf.SetBinContent(5, np.log(ebins[0]))  # min energy
-    hprofinf.SetBinContent(6, np.log(ebins[-1])) # max energy
+    hprofinf.SetBinContent(5, np.log(mbins[0]))  # min momentum
+    hprofinf.SetBinContent(6, np.log(mbins[-1])) # max momentum
     fout.WriteObject(hprofinf, "hprofinf")
     
 
@@ -105,16 +105,16 @@ def main():
     parsbins = np.arange(-0.5, npars+0.5+2, 1)
     # fit and save isotopric integrals
     for n in range(1, 3):
-        h, ebins = fin[f"I_iso_{n}"].to_numpy()
-        energies = (ebins[1:] + ebins[:-1])/2.
-        pars = np.polyfit(np.log(energies), np.log(h), npars-1)
+        h, mbins = fin[f"I_iso_{n}"].to_numpy()
+        momenta = (mbins[1:] + mbins[:-1])/2.
+        pars = np.polyfit(np.log(momenta), np.log(h), npars-1)
         th1d = ROOT.TH1D(f"gI_iso_{n}_pars", f"gI_iso_{n}_pars",  len(parsbins)-1, parsbins)
         for i, pi in enumerate(np.flip(pars), 1): th1d.SetBinContent(i, pi)
-        th1d.SetBinContent(npars+1, np.log(energies[0]))
-        th1d.SetBinContent(npars+2, np.log(energies[-1]))
+        th1d.SetBinContent(npars+1, np.log(momenta[0]))
+        th1d.SetBinContent(npars+2, np.log(momenta[-1]))
         fout.WriteObject(th1d, f"gI_iso_{n}_pars")
 
-    # mean number of photons per energy (gNphot)
+    # mean number of photons per momentum (gNphot)
     # copy 
     x, y = fin["gNphot"].values()
     g = ROOT.TGraph(len(x), x, y)

@@ -13,8 +13,6 @@
 /WCSim/PMTQEMethod Stacking_Only
 /WCSim/PMTCollEff on
 
-/WCSim/SavePi0 false
-
 /DarkRate/SetDarkRate 0. kHz
 /DarkRate/SetConvert 1.367
 

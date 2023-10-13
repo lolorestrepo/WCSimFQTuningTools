@@ -32,22 +32,26 @@ def main():
     parser.add_argument(    "--zedge", type=float, nargs="?", help = "histogram edge for vertical (z) dimensions in cm", default=136.95-20.) # default wcte
     parser.add_argument(    "--redge", type=float, nargs="?", help = "histogram edge for radial (r) dimensions in cm"  , default=172.05-20.) # default wcte
     parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path"         , default="$HOME/Software/WCSim/install/lib")
-    parser.add_argument(   "--fitqun",   type=str, nargs="?", help = "fiTQun source directory", default="$HOME/Software/fiTQun/fiTQun/")
+    parser.add_argument( "--fitqunlib",   type=str, nargs="?", help = "fiTQun lib path", default="$HOME/Software/fiTQun/install/lib")
     
     args = parser.parse_args()
     ##########################################
 
-    # Load TScatTable class from fiTQun
-    filename = join(expandvars(args.fitqun), "TScatTableF_cc.so")
-    if exists(filename): ROOT.gSystem.Load(filename)
-    else:
-        if args.verbose: print("Compiling fiTQun TScatTableF.cc...")
-        ROOT.gROOT.SetMacroPath(expandvars(args.fitqun))
-        ROOT.gROOT.LoadMacro("TScatTableF.cc++")
+    # # Load TScatTable class from fiTQun
+    # filename = join(expandvars(args.fitqun), "TScatTableF_cc.so")
+    # if exists(filename): ROOT.gSystem.Load(filename)
+    # else:
+    #     if args.verbose: print("Compiling fiTQun TScatTableF.cc...")
+    #     ROOT.gROOT.SetMacroPath(expandvars(args.fitqun))
+    #     ROOT.gROOT.LoadMacro("TScatTableF.cc++")
 
     # Load WCSimRoot.so
     ROOT.gSystem.AddDynamicPath(expandvars(args.wcsimlib))
     ROOT.gSystem.Load          ("libWCSimRoot.dylib" if sys.platform == "darwin" else "libWCSimRoot.so")
+
+    # Load libfiTQunLib.so
+    ROOT.gSystem.AddDynamicPath(expandvars(args.fitqunlib))
+    ROOT.gSystem.Load          ("libfiTQunLib.so.dylib" if sys.platform == "darwin" else "libfiTQunLib.so")
 
     # get simulation filenames, removing those ending in '_flat.root'
     infiles = glob.glob(join(args.indir[0], "*"))
@@ -89,8 +93,8 @@ def main():
     nzd    = args.nbins[5]
     ntheta = args.nbins[6]
 
-    zedge = args.zedge[0]
-    redge = args.redge[0]
+    zedge = args.zedge
+    redge = args.redge
 
     zs    = [-zedge, zedge]
     Rs    = [0., redge]

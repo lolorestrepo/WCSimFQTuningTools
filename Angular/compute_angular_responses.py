@@ -51,6 +51,9 @@ def main():
     # read PMT information (ids, positions, orientations)
     _, pmts_df = read_wcsim_geometry(infiles[0])
     pmts_df = pmts_df.set_index("TubeNo")
+    
+    # get ids of the tubes normal to the vessel (assumed to be the central PMTs)
+    inormal = pmts_df[pmts_df.mPMT_PMTNo == 1].index.values.astype(int)
 
     # these lines are commented because these parameter definitions ere misleading in WCSim
     # tube_ztop = df.loc["WCCylLength", "WC"]/2.  # detector cylinder half-length
@@ -60,13 +63,8 @@ def main():
     # define histogram bins
     detLength = args.zedge*2.
     detRad    = args.redge
-    rbins   = np.linspace(0, min(detRad, detLength/2.), args.nbins[0]+1)
-    etabins = np.linspace(0,                         1, args.nbins[1]+1)
-
-    # just hardcoded for the moment to compare
-    rbins   = np.arange(0, 350., 50.)
-    rbins   = np.array([0., 100., 150., 200., 250., 300.])
-    etabins = np.linspace(0, 1., 25+1)
+    rbins     = np.linspace(0, min(detRad, detLength/2.), args.nbins[0]+1)
+    etabins   = np.linspace(0,                         1, args.nbins[1]+1)
     
     # empty histograms to be filled
     Hside = np.zeros((len(rbins)-1, len(etabins)-1))
@@ -93,12 +91,19 @@ def main():
         ihPMT   = ihPMT  [sel_direct]
         tubepos = tubepos[sel_direct]
 
-        # transform from mm to cm
-        oppos   *= 0.1
-        tubepos *= 0.1
+        # select only PMTs normal to the vessel (central PMTs)
+        sel_normal = np.isin(ihPMT, inormal)
+        oppos   = oppos  [sel_normal]
+        ihPMT   = ihPMT  [sel_normal]
+        tubepos = tubepos[sel_normal]
+
 
         # get PMT orientation
         tubedir = pmts_df.loc[ihPMT, ["Orientation_x0", "Orientation_x1", "Orientation_x2"]].values.astype(float)
+
+        # transform from mm to cm
+        oppos   *= 0.1
+        tubepos *= 0.1
 
         # compute variables of interest:
         #    - distance between PMT and emission point
@@ -116,7 +121,7 @@ def main():
         # compute angles
         eta  = np.array([np.dot(v1, v2) for (v1, v2) in zip(r, tubedir)])/modr
 
-        # rotate tube positions to perform fiducial seections based on vertical and radial directions below
+        # rotate tube positions to perform fiducial selections based on vertical and radial directions below
         if vaxis != 2: tubepos = np.matmul(R, tubepos.T).T
 
         # select photons in valid shells

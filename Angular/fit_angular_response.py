@@ -6,10 +6,6 @@ import numpy  as np
 import matplotlib.pyplot as plt
 
 
-from os.path   import expandvars, join, basename
-
-
-
 def main():
 
     ############ Program arguments ############
@@ -22,7 +18,6 @@ def main():
 
     parser.add_argument("polydeg", type=int, nargs=1, help = "")
 
-    
     args = parser.parse_args()
     ##########################################
 
@@ -44,7 +39,7 @@ def main():
     tf1.SetParameters(*np.flip(pars))
 
     if args.verbose:
-        # plot results 
+        # plot results
         plt.figure(figsize=[5, 3])
         plt.scatter(etas, h, color="k")
         x = np.linspace(etabins[0], etabins[-1], 100)

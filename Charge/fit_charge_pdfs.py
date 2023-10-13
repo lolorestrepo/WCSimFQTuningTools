@@ -35,8 +35,8 @@ def get_fitting_function(mulow, muup):
 def main():
 
     ############ Program arguments ############
-    parser = argparse.ArgumentParser( prog        = "create 2D histos and unhitP"
-                                    , description = "Compute 2D histogram (predicted vs measured charge) and predicted Q vs unhitP"
+    parser = argparse.ArgumentParser( prog        = ""
+                                    , description = ""
                                     , epilog      = """""")
     
     parser.add_argument("-v", "--verbose", action="store_true")

@@ -12,6 +12,8 @@ def read_wcsim_geometry(filename):
     from **filename** and returns it in two dataframes.
     The first dataframe contains general information about the detector,
     and the second returns the information for each PMT
+
+    Requires WCSimRoot library loaded
     """
     rootf = ROOT.TFile(expandvars(filename), "read")
 
@@ -114,8 +116,9 @@ def read_stable(filename, names=["botscattable", "topscattable", "sidescattable"
     Read STables from file as numpy arrays
     the output is a dictionary with the bins and the tables 
     for the bottom, top and side PMTs
+
+    Requires fiTQun library loaded
     """
-    # TO-DO: Load TScatTable_c.so library inside function
     out = dict()
 
     file = ROOT.TFile(expandvars(filename))

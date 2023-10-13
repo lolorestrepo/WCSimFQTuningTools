@@ -41,31 +41,31 @@ def main():
     r0bins  = np.linspace(0, r0max*nr0bins/(nr0bins-1), nr0bins+1)
     th0bins = np.linspace(-1, 1, nth0bins+1)
 
-    # open input file and get energies
+    # open input file and get momenta
     fin = uproot.open(args.infile)
-    energies = np.sort([float(re.findall(r'\d+(?:\.\d+)?', key)[0]) for key in fin.keys() if re.match("g_\d+", key)])
-    # energy bins such that energies are the bin centers
-    ebins = (energies[1:] + energies[:-1])/2.
-    ebins = np.insert(ebins,          0, energies [0] - (ebins [0] - energies [0]))
-    ebins = np.insert(ebins, len(ebins), energies[-1] - (ebins[-1] - energies[-1]))
+    momenta = np.sort([float(re.findall(r'\d+(?:\.\d+)?', key)[0]) for key in fin.keys() if re.match("g_\d+", key)])
+    # momentum bins such that momenta are the bin centers
+    mbins = (momenta[1:] + momenta[:-1])/2.
+    mbins = np.insert(mbins,          0, momenta [0] - (mbins [0] - momenta [0]))
+    mbins = np.insert(mbins, len(mbins), momenta[-1] - (mbins[-1] - momenta[-1]))
 
     # define 3D histograms to save the integrals
     for n in range(3):
-        locals()[f"th3d_{n}"] = ROOT.TH3D( f"I_{n}", f"I_{n}"
-                                         ,       nr0bins,  r0bins
-                                         ,      nth0bins, th0bins
-                                         , len(energies), ebins)
+        locals()[f"th3d_{n}"] = ROOT.TH3D(     f"I_{n}", f"I_{n}"
+                                         ,      nr0bins, r0bins
+                                         ,     nth0bins, th0bins
+                                         , len(momenta), mbins)
         if n == 0: continue
         locals()[f"th1d_{n}"] = ROOT.TH1D( f"I_iso_{n}", f"I_iso_{n}"
-                                         , len(energies), ebins)
+                                         , len(momenta), mbins)
 
-    # compute integrals as a function of (energy, r0, th0)
+    # compute integrals as a function of (momentum, r0, th0)
     if args.verbose: print(f"Performing Cherenkov integrals...")
-    for ebin, energy in enumerate(energies, 1):
-        if args.verbose: print(f"Integrating {energy} MeV...")
+    for mbin, momentum in enumerate(momenta, 1):
+        if args.verbose: print(f"Integrating {momentum} MeV...")
 
         # get cherenkov profile 2D histogram 
-        th2d = fin[f"g_{energy}"]
+        th2d = fin[f"g_{momentum}"]
         g, thbins, sbins = th2d.to_numpy()
         g = histogram2d_to_func(g, thbins, sbins)
 
@@ -89,17 +89,17 @@ def main():
                 I = [sum(i*s**n)*ds for n in range(3)]
 
                 # save computed values
-                for n in range(3): locals()[f"th3d_{n}"].SetBinContent(r0bin, th0bin, ebin, I[n])
+                for n in range(3): locals()[f"th3d_{n}"].SetBinContent(r0bin, th0bin, mbin, I[n])
 
 
-    # compute isotropic integrals as a function of energy
+    # compute isotropic integrals as a function of momentum
     gsthr = []
     if args.verbose: print(f"Performing Isotropic integrals...")
-    for ebin, energy in enumerate(energies, 1):
-        if args.verbose: print(f"Integrating {energy} MeV...")
+    for mbin, momentum in enumerate(momenta, 1):
+        if args.verbose: print(f"Integrating {momentum} MeV/c...")
 
         # get cherenkov profile 2D histogram 
-        th2d = fin[f"g_{energy}"]
+        th2d = fin[f"g_{momentum}"]
         g, thbins, sbins = th2d.to_numpy()
 
         # values of s for evaluation
@@ -113,7 +113,7 @@ def main():
         I = [sum(iso*s**n)*ds for n in range(1, 3)]
 
         # save computed values
-        for n in range(1, 3): locals()[f"th1d_{n}"].SetBinContent(ebin, I[n-1])
+        for n in range(1, 3): locals()[f"th1d_{n}"].SetBinContent(mbin, I[n-1])
 
         # compute gsthr
         gsthr.append(s[np.cumsum(iso)*ds>0.9][0])
@@ -128,9 +128,9 @@ def main():
     for n in range(1, 3): fout.WriteObject(locals()[f"th1d_{n}"], f"I_iso_{n}")
 
     # write gsthr
-    fout.WriteObject(ROOT.TGraph(len(energies), energies, np.array(gsthr)), "gsthr")
+    fout.WriteObject(ROOT.TGraph(len(momenta), momenta, np.array(gsthr)), "gsthr")
 
-    # copy mean number of photons per energy (gNphot)
+    # copy mean number of photons per momentum (gNphot)
     x, y = fin["gNphot"].values()
     g = ROOT.TGraph(len(x), x, y)
     g.SetTitle("Mean number of photons per event")

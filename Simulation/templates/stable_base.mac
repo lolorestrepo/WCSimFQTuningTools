@@ -10,18 +10,24 @@
 /WCSim/PMT/PositionFile mPMT-configfiles/mPMTconfig_Position_WCTE_RotateBarrelHalfTower.txt
 /WCSim/Construct
 
-/WCSim/PMTQEMethod     Stacking_Only
+/WCSim/PMTQEMethod Stacking_Only
+/WCSim/PMTCollEff on
 
-/WCSim/SavePi0 true
-
-/DAQ/Digitizer SKI
-/DAQ/Trigger NDigits
-/DarkRate/SetDarkMode 0
-
-/control/execute daq.mac
+/DarkRate/SetDarkRate 0. kHz
+/DarkRate/SetConvert 1.367
 
 /process/inactivate msc
 
 /fqTune/mode sttree
 
 /mygen/generator gps
+/gps/ene/type   Mono
+/gps/energy     3.0 MeV
+/gps/pos/type   Volume
+/gps/pos/shape  Cylinder
+/gps/pos/centre 0 0 0 m
+/gps/pos/halfz  136.95 cm
+/gps/pos/radius 172.05 cm
+/gps/pos/rot1   1 0 0
+/gps/pos/rot2   0 0 1
+/gps/ang/type   iso
