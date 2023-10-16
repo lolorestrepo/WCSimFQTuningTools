@@ -49,6 +49,8 @@ void ShiftPoly(int nord, double mu, double *Csft){//Get polynomial coefficients 
   delete[] Corg;
 }
 
+
+
 void fconpoly(Double_t xval, Double_t *par, Double_t& tmpv, Double_t& tmpd) {
   const int npar=npars;
   int ibase=2+(npar-2)*nsect;//index of the first boundary
@@ -92,12 +94,16 @@ void fconpoly(Double_t xval, Double_t *par, Double_t& tmpv, Double_t& tmpd) {
   
 }
 
+
+
 Double_t fconpolywrap(Double_t *x, Double_t *par) {
   Double_t xval=x[0];
   Double_t tmpval,tmpder;
   fconpoly(xval,par,tmpval,tmpder);
   return tmpval;
 }
+
+
 
 double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirst=0) {
   
@@ -129,8 +135,6 @@ double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirs
       delete gofst;
       return -1.;
     }
-//    if (wlen<1.2*wtmp) wlen=1.2*wtmp;
-//    if (!fQuiet) cout << "wlen=" << wlen << endl;
   }
   
   double xrangL,xrangR;
@@ -140,10 +144,6 @@ double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirs
     if (flgFirst==0) {
       xrangR*=1.3;
     }
-//    else {
-////      xrangL=-0.2*xrangR;
-//      xrangR*=1.3;
-//    }
   }
   else if (irltv2peak<0) {
     xrangL=-wlen;
@@ -151,10 +151,6 @@ double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirs
     if (flgFirst==0) {
       xrangL*=1.3;
     }
-//    else {
-////      xrangR=-0.2*xrangL;
-//      xrangL*=1.3;
-//    }
   }
   else {
     xrangL=-(xbounds[isect+1]-xbounds[isect])*0.3;
@@ -165,7 +161,7 @@ double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirs
   
   if (flgFirst==0) {
     if (irltv2peak>0) {
-//    cout << xbounds[isect-1] << ", " << xbounds[isect] << endl;
+      // cout << xbounds[isect-1] << ", " << xbounds[isect] << endl;
       func[isect]->FixParameter(0,func[isect-1]->Eval(xbounds[isect]-xbounds[isect-1]));
       func[isect]->FixParameter(1,func[isect-1]->Derivative(xbounds[isect]-xbounds[isect-1]));
     }
@@ -186,11 +182,13 @@ double FitSect(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, int flgFirs
   
   double tmp = gofst->Chisquare(func[isect])/ndf;
   
-//  gofst->Write();
+  //  gofst->Write();
   delete gofst;
   
   return tmp;
 }
+
+
 
 int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqthr=1., double chsqrat=4., bool fPreset=false) {
   
@@ -233,9 +231,9 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
     }
     
     if (ipts>npars) {
-//    if (ipts>3) {
+      //    if (ipts>3) {
       fold=func[isect];
-//      chsqold=chsq;
+      //      chsqold=chsq;
       
       double xletmp = xbounds[isect];
       double xhetmp = xbounds[isect+1];
@@ -251,6 +249,7 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
       else {
         iLoop=0;
       }
+
       double dret=FitSect(gtmp,func,isect,ipeak,1);
       if (dret>0.) {
         chsq1st = (chsq1st*iLoop+dret)/(iLoop+1);
@@ -260,15 +259,12 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
       xbounds[isect]=xletmp;
       xbounds[isect+1]=xhetmp;
       
-//      if (iFit==0) {
-//        chsq1st = FitSect(gtmp,func,isect,ipeak,1);
-//        delete func[isect];
-//      }
       chsq = FitSect(gtmp,func,isect,ipeak);
+
       if (!fQuiet) cout << isect << ", " << ipeak << ", " << xbounds[isect+1]-xbounds[isect] << ", " << chsq << ", " << chsq1st << ", " << dret << endl;
-//      cout << fold << ", " << func[isect] << ", " <<  chsq << endl;
+      
       if (chsq>chsq1st*chsqrat && chsq>chsqthr) {//evaluate chisq at next section only and use that?
-//      if (chsq>chsqold*1.2 && chsq>1.0) {
+        //      if (chsq>chsqold*1.2 && chsq>1.0) {
         if (iFit!=0) {
           if (fDir==-1) {
             xbounds[isect]+=xminstp;
@@ -279,8 +275,8 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
           delete func[isect];
           func[isect]=fold;
           
-//          delete func[isect];
-//          chsq = FitSect(gtmp,func,isect,ipeak);
+          //          delete func[isect];
+          //          chsq = FitSect(gtmp,func,isect,ipeak);
           if (!fQuiet) cout << xbounds[isect] << ", " << xbounds[isect+1] << ", " << func[isect]->GetParameter(0) << ", " << func[isect]->GetParameter(1) << endl;
           
           break;
@@ -303,6 +299,7 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
       if (xbounds[isect]<arX[0]) fDir=1;
       if (xbounds[isect+1]>arX[nmom-1]) fDir=-1;
     }
+
     if (fDir==-1) {
       if (xbounds[isect]<arX[0]) {
         iret=-1;
@@ -326,21 +323,23 @@ int ExpndBin(TGraphErrors *gtmp, TF1 **func, int isect, int ipeak, double chsqth
   return iret;
 }
 
+
+
 int FitIt(TGraphErrors *gtmp, TF1*& fconn) {
   
   int ireturn=0;
-//  int imaxpos=0;
+  //  int imaxpos=0;
   double maxpos=0.,maxval=-1.;
   int nmom=gtmp->GetN();
   Double_t *arX=gtmp->GetX();
   Double_t *arY=gtmp->GetY();
-//  for (int imom=0; imom<nmom; imom++) {
-//    if (arY[imom]>maxval) {
-//      maxval=arY[imom];
-//      maxpos=arX[imom];//peak position
-////      imaxpos=imom;
-//    }
-//  }
+  //  for (int imom=0; imom<nmom; imom++) {
+  //    if (arY[imom]>maxval) {
+  //      maxval=arY[imom];
+  //      maxpos=arX[imom];//peak position
+  ////      imaxpos=imom;
+  //    }
+  //  }
   
   maxpos=arX[nmom-1];
   
@@ -382,10 +381,11 @@ int FitIt(TGraphErrors *gtmp, TF1*& fconn) {
       ipeak++;
       iret=ExpndBin(gtmp,func,0,ipeak,chsqthresh,chsqthrrat);
     }
+
     if (iret<-1) {//too few data points in the new bin, merge it
       nsect--;
       ipeak--;
-//      xbounds[0]=xbounds[1];
+      //      xbounds[0]=xbounds[1];
       if (func[0]) delete func[0];
       for (int idx=0; idx<nsect; idx++) {
         func[idx]=func[idx+1];
@@ -396,23 +396,6 @@ int FitIt(TGraphErrors *gtmp, TF1*& fconn) {
     xbounds[0]=arX[0]-1e-3;
     delete func[0];
     iret=ExpndBin(gtmp,func,0,ipeak,chsqthresh,chsqthrrat,true);
-    
-//    while (!(iret>0)) {
-//      if (nsect>=nsectmax) {
-//        iItr=1;
-//        iret=0;
-//        break;
-//      }
-//      
-//      nsect++;
-//      iret=ExpndBin(gtmp,func,nsect-1,ipeak,chsqthresh,chsqthrrat);
-//    }
-//    if (iret>1) {//too few data points in the new bin, merge it
-//      nsect--;
-//      //    xbounds[nsect]=xbounds[nsect+1];
-//    }
-    
-//    if (nsect<2) iItr=-1;
     
     if (iItr>0) {
       if (!fQuiet) cout << "nsect exceeded maximum value!" << endl;
@@ -452,7 +435,7 @@ int FitIt(TGraphErrors *gtmp, TF1*& fconn) {
   }
   
   fconn = new TF1(Form("func_%s",gtmp->GetName()),fconpolywrap,xbounds[0],xbounds[nsect],nparnum);
-//  fconn->SetNpx(1000);
+    //  fconn->SetNpx(1000);
   for (int i=0; i<=nsect; i++) {
     fconn->FixParameter(2+(npars-2)*nsect+i,xbounds[i]);//set boundary positions
   }
@@ -473,6 +456,8 @@ int FitIt(TGraphErrors *gtmp, TF1*& fconn) {
   
   return ireturn;
 }
+
+
 
 int main(int argc, char* argv[]){//PDG
   
@@ -514,12 +499,12 @@ int main(int argc, char* argv[]){//PDG
   }
   else if (PID==321) {
     xofst=530.;
-//    xminstp=0.06;
+    //    xminstp=0.06;
   }
   else if (PID==2212) {
     xofst=1020.;
-//    xminstp=0.1;
-//    xminstp=0.06;
+    //    xminstp=0.1;
+    //    xminstp=0.06;
   }
   else {
     cout << "Unknown particle type!" << endl;
@@ -582,14 +567,17 @@ int main(int argc, char* argv[]){//PDG
     hI3d_par_chi2[i] = new TH2D(Form("hI3d_par_%d_chi2",i),Form("I_{%d} parameters",i),nR0bin,R0binEdgs,nth0bin,th0binEdgs);
     hI3d_nsect[i] = new TH2D(Form("hI3d_nsect_%d",i),Form("I_{%d} nsect",i),nR0bin,R0binEdgs,nth0bin,th0binEdgs);
     cout << "n=" << i << endl;
+
     for (int j=1; j<=nR0bin; j++) {
+
       if (iR0bin>0 && j!=iR0bin) continue;
       cout << "iR0=" << j << endl;
       for (int k=1; k<=nth0bin; k++) {
+
         if (ith0bin>0 && k!=ith0bin) continue;
         for (int imom=0; imom<nmom; imom++) {
           arval[imom]=hI3d[i]->GetBinContent(j,k,imom+imomofst+1);
-//          arerr[imom]=sqrt(arval[imom])/10.;
+          // arerr[imom]=sqrt(arval[imom])/10.;
           arerr[imom]=arval[imom]/100.;
           arerr[imom]=0.;
         }
@@ -626,8 +614,8 @@ int main(int argc, char* argv[]){//PDG
           
           partmp[0]=tmpval;
           partmp[1]=tmpder;
-//          partmp[0]=fconn->Eval(xbedgtmp);
-//          partmp[1]=fconn->Derivative(xbedgtmp);
+          // partmp[0]=fconn->Eval(xbedgtmp);
+          // partmp[1]=fconn->Derivative(xbedgtmp);
           
           for (int ipar=2; ipar<npars; ipar++) {
             partmp[ipar]=fconn->GetParameter(ipar+(npars-2)*isect);

@@ -5,15 +5,81 @@ import numpy  as np
 
 
 def histogram2d_to_func(hist, xbins, ybins):
-    '''
+    """
     Converts a numpy 2D histogram into a function
     Example: to-do
-    '''
+    """
     def getter(x, y):
         xbin = np.digitize(x, xbins) - 1
         ybin = np.digitize(y, ybins) - 1
         return hist[xbin, ybin]
     return getter
+
+
+def split_array(array, N, nmin=1):
+
+    """Given an array, it split it in N partitions
+    with nmin minimun number of elements.
+    It returns L%N partitions with (L//N + 1) elements
+    and N-L%N with L//N.
+    
+    The last element of each partition coincides with
+    the first element of the next.
+
+    For example:
+    >>> array = [1, 2, 3, 4, 5]
+    >>> split_array(array, 2)
+    [[1, 2, 3, 4], [4, 5]]
+
+    Notice that in the result the first partition contains 
+    2 more values because of the first element of the fist partiton
+    is also added.
+    """
+    splitted = []
+    n = len(array)//N
+    r = len(array)% N
+    if n<nmin:
+        n = nmin
+        N = int(np.ceil(len(array)/n))
+        r = len(array)% N
+    iu = 0
+    while (iu<len(array)-1):
+        il = iu
+        iu = il + n
+        if r: iu += 1
+        splitted.append(array[il: iu+1])
+        r-=1
+    if len(splitted[-1]) < nmin:
+        splitted[-2] = np.concatenate((splitted[-2], splitted[-1][1:]))
+        splitted.pop()
+    return splitted
+
+
+def compute_goodness_of_fit(xs, ys, parss):
+    """
+    This function computes the coefficient of determination
+    https://en.wikipedia.org/wiki/Coefficient_of_determination
+    for a polynomial fit.
+
+    It computes the coefficient for a sectioned polynolial fit
+    xs: list with the x values for each partition
+    ys: list with the y values for each partition
+    parss: polynomial parameters for each partition
+    """
+    Sres = 0
+    Stot = 0
+    n    = 0
+    ysum = 0
+    for s, (x, y, pars) in enumerate(zip(xs, ys, parss)):
+        pol = np.poly1d(pars)
+        Sres += np.sum((y - pol(x))**2)
+        ysum += np.sum(y)
+        n    += len(x)
+    ymean = ysum/n
+    for y in ys: Stot += np.sum((y - ymean)**2) 
+    return 1 - Sres/Stot
+
+
 
 def main():
 
@@ -25,19 +91,25 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument( "-i", "--infile", type=str, nargs="?", help = "", default="cprofiles_integrals.root")
 
-    parser.add_argument( "npars", type=int, nargs=1, help = "")
+    parser.add_argument(      "npars", type=int,   nargs=1, help = "")
+    parser.add_argument( "--nsectmax", type=int, nargs="?", help = "", default=10)
+    parser.add_argument(     "--Rmin", type=float, nargs="?", help = "", default=0.99)
     
     args = parser.parse_args()
     ##########################################
 
-    npars = args.npars[0]
+    npars    = args.npars   [0]
+    nsectmax = args.nsectmax
+    Rmin     = args.Rmin    
+
     # open input and output files
     fin  = uproot.open(args.infile)
     fout = ROOT.TFile("cprofiles_fits.root", "RECREATE")
 
     # fit parameters are saved in 3D histo, thus define the bins
-    # add +2 bins to save the fit bounds (to be fiTQun compatible)
-    parsbins = np.arange(-0.5, npars+0.5+2, 1)
+    # add bins to save the fit bounds (as required by fiTQun)
+    nparbins = npars*nsectmax + nsectmax + 1
+    parsbins = np.arange(-0.5, nparbins+0.5, 1)
     
     # loop over s exponent in the integrals
     for n in range(3):
@@ -49,7 +121,7 @@ def main():
         th3d = ROOT.TH3D( f"Js_{n}", f"Js_{n}"
                         ,  len(r0bins)-1,  r0bins
                         , len(th0bins)-1, th0bins
-                        ,        npars+2, parsbins)
+                        ,       nparbins, parsbins)
         
         th2d_chi2 = ROOT.TH2D( f"chi2_{n}", f"chi2_{n}"
                              ,  len(r0bins)-1,  r0bins
@@ -68,22 +140,47 @@ def main():
             for r0bin, _ in enumerate(r0bins[:-1], 0):
                 # get integrals for (r0, th0) bins
                 I = h[r0bin, th0bin]
-                # polynomial fit
+                
+                # polynomial fit, full region
                 js = np.polyfit(log_momenta, I, npars-1)
+                J = [(0, log_momenta[0], log_momenta[-1], js)]
+                R = compute_goodness_of_fit([log_momenta], [I], [js])
 
-                # fill 3D histogram with results
-                for i, ji in enumerate(np.flip(js), 1): th3d.SetBinContent(r0bin+1, th0bin+1, i, ji)
-                # save bounds (to be fiTQun compatible)
-                th3d.SetBinContent(r0bin+1, th0bin+1, npars+1, log_momenta[0])
-                th3d.SetBinContent(r0bin+1, th0bin+1, npars+2, log_momenta[-1])
+                # perform sectioned fits, if needed
+                nsect = 1
+                # stop if number of sections saturates if number of points lower than parameters
+                stop  = False
+                while ((R<Rmin) & (nsect<nsectmax) & (~stop)):
+                    nsect += 1
+                    J = []
+                    # create sections
+                    sect_momenta = split_array(log_momenta, nsect, npars)
+                    sect_I       = split_array(          I, nsect, npars)
+                    # saturation of number of sections
+                    if len(sect_momenta)<nsect:
+                        nsect = len(sect_momenta)
+                        stop  = True
+                    # polynomial fit for each section
+                    for s, (x, y) in enumerate(zip(sect_momenta, sect_I)):
+                        j = np.polyfit(x, y, npars-1)
+                        J.append((s, x[0], x[-1], j))
+                    # compute coefficient of determination
+                    R = compute_goodness_of_fit(sect_momenta, sect_I, [section[-1] for section in J])
 
-                # compute and save chi2
-                p = np.poly1d(js)
-                chi2 = sum((p(log_momenta) - I)**2)
-                th2d_chi2.SetBinContent(r0bin+1, th0bin+1, chi2)
+                # fill 3D histogram with parameters and bounds
+                for section in J:
+                    s  = section[0]
+                    js = section[3]
+                    for i, ji in enumerate(np.flip(js), s*npars+1): th3d.SetBinContent(r0bin+1, th0bin+1, i, ji)
+                    th3d.SetBinContent(r0bin+1, th0bin+1, nsect*npars+s+1, section[1])
+                th3d.SetBinContent(r0bin+1, th0bin+1, nsect*(npars+1)+1, section[2])
+                for i in range((npars+1)*nsect+2, nparbins+1): th3d.SetBinContent(r0bin+1, th0bin+1, i, -9999.)
 
                 # save 1 in nsect histo (to be fiTQun compatible)
-                th2d_nsect.SetBinContent(r0bin+1, th0bin+1, 1)
+                th2d_nsect.SetBinContent(r0bin+1, th0bin+1, nsect)
+
+                # TO-DO: compute chi2
+                th2d_chi2.SetBinContent(r0bin+1, th0bin+1, 1)
 
         fout.WriteObject(      th3d, f"hI3d_par_{n}")
         fout.WriteObject( th2d_chi2, f"hI3d_par_{n}_chi2")
@@ -92,9 +189,9 @@ def main():
     # Add hprofinf
     hprofinf = ROOT.TH1F("hprofinf", "hprofinf", 6,  np.arange(-0.5, 6.5, 0.5))
     hprofinf.SetBinContent(1, npars)
-    hprofinf.SetBinContent(2, 50)   # nsectmax, hardcoded (?), not really used in fiTQun
-    hprofinf.SetBinContent(3, 0)    # momentum ofset
-    hprofinf.SetBinContent(4, 0.2)  # momentum min step, hardcoded (?)
+    hprofinf.SetBinContent(2, nsectmax)          # not really used in fiTQun
+    hprofinf.SetBinContent(3, 0)                 # momentum ofset
+    hprofinf.SetBinContent(4, 0.2)               # momentum step (?)
     hprofinf.SetBinContent(5, np.log(mbins[0]))  # min momentum
     hprofinf.SetBinContent(6, np.log(mbins[-1])) # max momentum
     fout.WriteObject(hprofinf, "hprofinf")
