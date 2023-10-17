@@ -99,9 +99,10 @@ def main():
     mus = np.unique([get_mu_and_index(f)[0] for f in infiles])
     groups = [list(group) for key, group in itertools.groupby(infiles, key=lambda x: get_mu_and_index(x)[0])]
 
-    # loop over mu and fill histograms for each one
+    # read qbins from file
     exists(args.qbins[0])
     qbins = np.loadtxt(args.qbins[0])
+    # loop over mu and fill histograms for each one
     results = []
     with concurrent.futures.ProcessPoolExecutor() as executor:
         # parallelize

@@ -6,9 +6,9 @@ The procedure involves the following steps:
 
 1) Create the 2D histograms of true/predicted charge ($\mu$) vs measured charge ($q$) and fit the unhit probability vs $\mu$.
 
-    Run it through: `python create_2Dhistos_and_unhitP.py [-v] [--qbins QBINS] [--wcsimlib [WCSIMLIB]] indir`
+    Run it through: `python create_2Dhistos_and_unhitP.py [-v] [--qbins qbins-filename] [--wcsimlib [WCSIMLIB]] indir`
     
-    where `v` activates verbosity (recommended to see the unhit probability fit); `qbins` is a file containing the bin edges desired for the q variable; `wcsimlib` is the directory of the WCSim library; and `indir` is the directory of the simulated data for all the $\mu$ values. The files in `indir` **must** be named **out_{$\mu$}_{index}.root**.
+    where `v` activates verbosity (recommended to see the unhit probability fit); `qbins` is a file containing the bin edges desired for the $q$ variable; `wcsimlib` is the directory of the WCSim library; and `indir` is the directory of the simulated data for all the $\mu$ values. The files in `indir` **must** be named **out_{$\mu$}_{index}.root**.
 
 2) Perform the $q$ vs $f(q|\mu)$ fits.
 

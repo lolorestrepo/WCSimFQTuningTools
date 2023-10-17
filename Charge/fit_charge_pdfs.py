@@ -41,17 +41,11 @@ def main():
     
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(  "--infile",   type=str, nargs="?", help = "charge 2D file", default="charge2D_and_unhit.root")
-    parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path", default="$HOME/Software/WCSim/install/lib")
-
     parser.add_argument(   "--npars", type=int  , nargs="+", help = "number of parameters per range", default=[4, 6, 4])
     parser.add_argument( "--qranges", type=float, nargs="+", help = "range limits for q", default=[0., 1.45, 29.5, 1000.])
     
     args = parser.parse_args()
     ##########################################
-
-    # Load WCSimRoot.so
-    ROOT.gSystem.AddDynamicPath(expandvars(args.wcsimlib))
-    ROOT.gSystem.Load          ("libWCSimRoot.dylib" if sys.platform == "darwin" else "libWCSimRoot.so")
 
     # Config variables
     infilename = args.infile
@@ -87,7 +81,7 @@ def main():
 
     # loop in q ranges
     # - gParams: for each range and parameter in this range: q vs parameter
-    # - gmuthrs : for each range and parameter in this range: q vs low and q vs high thresholds
+    # - gmuthrs: for each range and parameter in this range: q vs low and q vs high thresholds
     globalpi = 1 # global index of the qbin (unlike in range index): represents the qbin index
     for rang in range(nqranges):
         if args.verbose:
@@ -150,7 +144,7 @@ def main():
     for bound, gmuthr in enumerate(gmuthrs): fout.WriteObject(gmuthr, f"gmuthr_Rang{rang}_{bound}")
 
 
-    # copy PUnhit to output file (TGraph copy not implemented in uproot)
+    # copy PUnhit to output file (copying a TGraph is not implemented in uproot)
     fin = ROOT.TFile(infilename)
     tgraph = fin.Get("PUnhit")
     fout.WriteObject(tgraph, "PUnhit")
