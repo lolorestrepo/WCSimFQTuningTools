@@ -32,7 +32,7 @@ for vals in Iterators.product(values(config_variables)...)
     # define dict with (config-variable, value)
     d = Dict{String, Any}(zip(ks, vals))
 
-    if verbose println("Writting files for $(collect(zip(ks, vals)))") end
+    if verbose println("Writting files for $(join(["$key = $value" for (key, value) in d], ", "))") end
 
     # subtask for each set of values
     for subtask in range(1, nsubtasks)

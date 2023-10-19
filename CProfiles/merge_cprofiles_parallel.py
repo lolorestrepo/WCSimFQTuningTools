@@ -22,6 +22,8 @@ def process_momentum(momentum, files, htype, lock, verbose=False):
     with uproot.open(files[0]) as fin:
         nevents += fin["nevents"].counts()[0]
         h, thbins, sbins = fin[f"{htype}g"].to_numpy()
+        # transform distance units from mm to cm
+        sbins = np.divide(sbins, 10)
     # loop through the rest of files
     for file in files[1:]:
         with uproot.open(file) as fin:
@@ -88,11 +90,6 @@ def main():
     # split input files in momentum groups
     momenta = np.unique([get_momentum_and_index(f)[0] for f in infiles])
     groups = [list(group) for key, group in groupby(infiles, key=lambda x: get_momentum_and_index(x)[0])]
-
-    # # hack (remove)
-    # sel = np.argwhere(np.array(momenta)>850).flatten()[0]
-    # momenta = momenta[:sel]
-    # groups  = groups [:sel]
 
     # create output file
     fout = ROOT.TFile("cprofiles_merged.root", "RECREATE")

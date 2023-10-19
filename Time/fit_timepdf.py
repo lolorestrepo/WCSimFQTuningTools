@@ -7,14 +7,22 @@ import ROOT
 import numpy  as np
 from scipy.optimize import curve_fit
 
-from os.path import expandvars
-
 # register RankWarning as exception
 warnings.filterwarnings("error", category=np.RankWarning)
 
 # define gaussian pdf
 def gaussian(x, mu, sig):
     return (1/(sig*np.sqrt(2.*np.pi)))*np.exp(-(x-mu)**2/(2*sig**2))
+
+# define indirect light timepdf
+def indirect_timepdf(t, delta, sig, gamma):
+    out = np.zeros(len(t))
+    dt = t - delta
+    A = 1./(np.sqrt(np.pi/2.)*sig + 2*gamma)
+    sel = dt<0
+    out[sel]  = A*np.exp(-dt[sel]**2/(2.*sig**2))
+    out[~sel] = A*(dt[~sel]/gamma + 1.)*np.exp(-dt[~sel]/gamma)
+    return out
 
 
 def main():
@@ -27,16 +35,16 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(  "--infile",   type=str, nargs="?", help = "time 2D file", default="tres_trueq_2Dhistogram.root")
 
-    parser.add_argument( "--npars_gauss", type=int  , nargs="+", help = "number of parameters", default=[7])
-    parser.add_argument( "--npars_pars" , type=int  , nargs="+", help = "number of parameters", default=[7])
+    parser.add_argument( "--npars_gauss", type=int, nargs="?", help = "number of parameters", default=7)
+    parser.add_argument( "--npars_pars" , type=int, nargs="?", help = "number of parameters", default=7)
     
     args = parser.parse_args()
     ##########################################
 
     # Config variables
     infilename  = args.infile
-    npars_gauss = args.npars_gauss[0]
-    npars_pars  = args.npars_pars [0]
+    npars_gauss = args.npars_gauss
+    npars_pars  = args.npars_pars
 
     # read file containing 2D histograms for each momentum
     f  = uproot.open(infilename)
@@ -44,7 +52,7 @@ def main():
     histonames = list(f.classnames().keys())
     momenta = []
     for name in histonames:
-        m = re.match(r"htimepdf_(\d+\.\d+)", name)
+        m = re.match(r"htimepdf_direct_(\d+\.\d+)", name)
         if m: momenta.append(float(m.group(1)))
     momenta = np.array(momenta)
     momenta.sort() # inplace sort
@@ -58,7 +66,7 @@ def main():
     fout = ROOT.TFile("fitted_timepdf.root", "RECREATE")
 
     # read one of the 2D histograms to get the binning and define bin centers
-    _, tresbins, trueqbins = f[f"htimepdf_{momenta[0]}"].to_numpy()
+    _, tresbins, trueqbins = f[f"htimepdf_direct_{momenta[0]}"].to_numpy()
     tress  = (tresbins [1:] + tresbins [:-1])/2.
     trueqs = (trueqbins[1:] + trueqbins[:-1])/2.
 
@@ -70,7 +78,11 @@ def main():
     if args.verbose: print("1) Performing gaussian fits...")
     for pi, p in enumerate(momenta, 1):
         # read 2D histogram for this momentum
-        H, _, _ = f[f"htimepdf_{p}"].to_numpy()
+        try:
+            H, _, _ = f[f"htimepdf_direct_{p}"] .to_numpy()
+        except uproot.KeyInFileError:
+            # add zero due to float cast above
+            H, _, _ = f[f"htimepdf_direct_{p}0"].to_numpy()
 
         # loop in true charge
         for tqi, tq in enumerate(trueqs, 1):
@@ -78,7 +90,7 @@ def main():
             proj = H[:, tqi-1]
             norm = np.sum(proj * (tresbins[1:] - tresbins[:-1]))
 
-            # do the fit (only if number of entries is enought)
+            # do the fit (only if number of entries is enough)
             if (proj.sum()<45): pars = [np.nan, np.nan]
             else:
                 try:
@@ -155,7 +167,56 @@ def main():
     htpdfinfo.SetBinContent(7, 0.) # momentum offset
     fout.WriteObject(htpdfinfo, "htpdfinfo")
 
+    # save input file direct light 2D histograms as 3D histogram
+    # TODO: normalize
+    th3d = ROOT.TH3D( "htimepdf_direct", "htimepdf_direct"
+                    , len(tresbins)-1 , tresbins
+                    , len(trueqbins)-1, trueqbins
+                    , len(pbins)-1    , pbins)
+    
+    for pi, p in enumerate(momenta, 1):
+        # read 2D histogram for this momentum
+        try:
+            H, tresbins, trueqbins = f[f"htimepdf_direct_{p}"] .to_numpy()
+        except uproot.KeyInFileError:
+            # add zero due to float cast above
+            H, tresbins, trueqbins = f[f"htimepdf_direct_{p}0"].to_numpy()
+        for j, _ in enumerate(tress, 1):
+            for k, _ in enumerate(trueqs, 1):
+                th3d.SetBinContent(j, k, pi, H[j-1, k-1])
+    fout.WriteObject(th3d, "htimepdf_direct")
+
+
+    # Fit timepdf for indirect light
+    # get normailized distributions for each momentum
+    timepdf = dict()
+    for p in momenta:
+        try:
+            Hindirect, tresbins, trueqbins = f[f"htimepdf_indirect_{p}"].to_numpy()
+        except uproot.KeyInFileError:
+            Hindirect, tresbins, trueqbins = f[f"htimepdf_indirect_{p}0"].to_numpy()
+
+        # project and normalize
+        h    = Hindirect.sum(axis=1)
+        norm = np.sum(h*(tresbins[1:]-tresbins[:-1]))
+        timepdf[p] = h/norm
+    
+    tress = (tresbins[1:] + tresbins[:-1])/2.
+
+    # merge momentum distributions and fit
+    pdf = np.zeros(len(tresbins)-1)
+    for p in momenta: pdf += timepdf[p]
+    norm = np.sum(pdf*(tresbins[1:]-tresbins[:-1]))
+    pdf  = pdf/norm
+    pars, cov = curve_fit(indirect_timepdf, tress, pdf)
+    
+    # save indirect pdf parameters
+    th1d = ROOT.TH1D("indirect", "indirect", 3, 0, 3)
+    for i, par in enumerate(pars, 1): th1d.SetBinContent(i, par)
+    fout.WriteObject(th1d, "indirect")
+
     fout.Close()
+    return
 
 if __name__ == "__main__":
     main()

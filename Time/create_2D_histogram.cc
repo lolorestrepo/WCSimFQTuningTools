@@ -96,11 +96,9 @@ int main(int argc, char* argv[]){
   // Define regular expresion to match filenames
   regex filename_pattern("out_" + particle + "_(-?\\d+(?:\\.\\d+)?)_(\\d+)\\.root");
 
-  string directory_path = "/sps/t2k/gdiazlop/Time/out/";
-
   // Loop through files in directory and save them to "grouped_filenames" 
   // such that the files get grouped for each simulated energy
-  for (const auto& entry : fs::directory_iterator(directory_path)) {
+  for (const auto& entry : fs::directory_iterator(indirectory)) {
     if (fs::is_regular_file(entry)) {
       fs::path full_filename = entry.path().string();
       string filename = full_filename.filename();
@@ -126,7 +124,7 @@ int main(int argc, char* argv[]){
   const char* ofilename = "tres_trueq_2Dhistogram.root";
   TFile* of = new TFile(ofilename, "RECREATE");
   of->Close();
-
+  
 
   ////////////////////////////////////////
   // Loop through each energy value
@@ -137,7 +135,8 @@ int main(int argc, char* argv[]){
   vector<double> ntotal;
   vector<double> npc;
   for (auto& entry : grouped_filenames) {
-    
+
+    cout << "--------------------" << endl;
     cout << "Processing E = " << entry.first << endl;
     cout << "--------------------" << endl;
     sort(entry.second.begin(), entry.second.end());
@@ -151,8 +150,6 @@ int main(int argc, char* argv[]){
     //    - instantiate fiTQun and fitqun_shared
 
     char* filename = const_cast<char*> (entry.second[0].c_str());
-    cout << "  Using first file =>" << filename << endl;
-    cout << "                    " << endl;
 
     // Load WCSim wrapper and get geometry
     WCSimWrap    * wc       = WCSimWrap::Get(filename);
@@ -201,9 +198,8 @@ int main(int argc, char* argv[]){
     fiTQun       * fq       = new fiTQun(wc->NPMT());
     fiTQun_shared* fqshared = fiTQun_shared::Get(wc->NPMT());
 
-    fq      ->ReadSharedParams(0,load_flag,true,true,1);
-    fqshared->SetScatflg(0);  // don't compute predicted charge by scattered light
-    fqshared->SetPhi0(-1.,1.);
+    fq->ReadSharedParams(1,load_flag,true,true,1);
+    // fqshared->SetPhi0(-1.,1.); // ?
 
     // Get momentum
     double momentum = track->GetP();
@@ -213,15 +209,20 @@ int main(int argc, char* argv[]){
     double Iiso[2], nphot, smax;
     fiTQun_shared::Get()->SetTypemom(PID_index, momentum, Iiso, nphot, smax);
     
-    // Define the htimepdf 2D histogram to be filled
-    const char* hname = ("htimepdf_" + to_string(momentum)).c_str();
-    TH2D htimepdf(hname,"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
-    htimepdf.Sumw2();
+    // Define the 2D time pdf histograms to be filled
+    const char* hname_direct = ("htimepdf_direct_" + to_string(momentum)).c_str();
+    TH2D hdirect(hname_direct,"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
+    hdirect.Sumw2();
 
+    const char* hname_indirect = ("htimepdf_indirect_" + to_string(momentum)).c_str();
+    TH2D hindirect(hname_indirect,"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
+    hindirect.Sumw2();
 
     //////////////////////////////////////////
     // Loop through each file
     //////////////////////////////////////////
+    cout << "" << filename << endl;
+    cout << "Loop throught files" << endl;
     int ntotal_counter = 0;
     int npc_counter = 0;
     for (const fs::path& path : entry.second) {
@@ -230,7 +231,7 @@ int main(int argc, char* argv[]){
       cout << "    =>" << filename << endl;
 
       // Read file
-      WCSimWrap* wc       = WCSimWrap::Get(filename);
+      WCSimWrap* wc = WCSimWrap::Get(filename);
 
       // Loop through each event
       ntotal_counter += wc->NEvt();
@@ -268,8 +269,14 @@ int main(int argc, char* argv[]){
         track_params[6] = track->GetP();
         
         // Get the predicted charge at each pmt and the PC flag
-        double true_q[nPMT_max];
-        int isPC = fq->Get1Rmudist(PID_index, track_params, true_q);
+        // Direct
+        fqshared->SetScatflg(0);
+        double true_q_direct[nPMT_max];
+        fq->Get1Rmudist(PID_index, track_params, true_q_direct);
+        // Total
+        fqshared->SetScatflg(1);
+        double true_q_total[nPMT_max];
+        int isPC = fq->Get1Rmudist(PID_index, track_params, true_q_total);
 
         // If the event is PC, isPC = 1
         if (isPC == 0) {
@@ -290,7 +297,8 @@ int main(int argc, char* argv[]){
             double t = trigger_offset - trigger->GetHeader()->GetDate();
             double t_residual = digi_hit->GetT() - t - (smax/2.)/c0 - midtrack_pmt_distance*n_water/c0;
 
-            htimepdf.Fill(t_residual, log10(true_q[pmtid]));
+            hdirect  .Fill(t_residual, log10(true_q_direct[pmtid]));
+            hindirect.Fill(t_residual, log10(true_q_total [pmtid] - true_q_direct[pmtid]));
           }
         }
         else{ npc_counter += 1;}
@@ -305,7 +313,8 @@ int main(int argc, char* argv[]){
     // Write timepdf to output file
     cout << "Writing to " << ofilename << std::endl;
     TFile* of = new TFile(ofilename, "UPDATE");
-    htimepdf.Write();
+    hdirect  .Write();
+    hindirect.Write();
     of->Close();
     cout << "" << endl;
   }

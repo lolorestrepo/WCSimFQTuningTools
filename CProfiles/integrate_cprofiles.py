@@ -7,7 +7,7 @@ import numpy  as np
 def histogram2d_to_func(hist, xbins, ybins):
     '''
     Converts a numpy 2D histogram into a function
-    Example: to-do
+    Example: todo
     '''
     def getter(x, y):
         xbin = np.digitize(x, xbins) - 1
@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument( "-i", "--infile", type=str, nargs="?", help = "", default="cprofiles_merged.root")
 
-    parser.add_argument(    "r0max", type=float, nargs=1, help = "")
+    parser.add_argument(    "r0max", type=float, nargs=1, help = "in cm")
     parser.add_argument(  "nr0bins", type=int  , nargs=1, help = "")
     parser.add_argument( "nth0bins", type=int  , nargs=1, help = "")
     

@@ -7,7 +7,7 @@
 #SBATCH --ntasks=NTASKS
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=3000
-#SBATCH --time=23:00:00
+#SBATCH --time=02:00:00
 #SBATCH --licenses=sps
 
 start=$(date +%s)

@@ -29,4 +29,4 @@ The procedure to create the macro files, tasks and jobs is the following:
 
 To run the simulations interactivelly, see **Simulations/local**.
 
-**TO-DO**: add documentation about the different simulations required for the tuning files
+**TODO**: add documentation about the different simulations required for the tuning files

@@ -129,7 +129,7 @@ def main():
         sel_fiducial_shell_side = (rlim + abs(tubepos[:, 2]))                             <= detLength/2.
         sel_fiducial_shell_caps = (rlim + np.sqrt(np.sum(tubepos[:, (0, 1)]**2, axis=1))) <= detRad
 
-        # 2D histogral in distance and angle variables
+        # 2D histogram in distance and angle variables
         hside, _, _ = np.histogram2d(modr[sel_fiducial_shell_side], eta[sel_fiducial_shell_side], bins=[rbins, etabins])
         hcaps, _, _ = np.histogram2d(modr[sel_fiducial_shell_caps], eta[sel_fiducial_shell_caps], bins=[rbins, etabins])
         hall = hside + hcaps
