@@ -7,7 +7,7 @@ Follow the steps to generate a the Cherenkov profiles tuning file:
 - The tools assume that the distance units are `mm` in the simulation files, and transformed to `cm` in the step 1).
 - Make sure ROOT is setup (in order to be able to `import ROOT`) 
 
-**Step 1**: Run `merge_cprofiles_parallel.py` script: `python merge_cprofiles.py /path/to/input/files/ tr|wt [-v]`, where the input files must be named as **out_{particle}\_{momentum}_{integer}.root**. It outputs **cprofiles_merged.root** which merges the cherenkov profiles for all the simulated momenta. The second argument stands for **tr** (true) or **wt** (weighted) profiles.
+**Step 1**: Run `merge_cprofiles_parallel.py` script: `python merge_cprofiles_parallel.py /path/to/input/files/ tr|wt [-v]`, where the input files must be named as **out_{particle}\_{momentum}_{integer}.root**. It outputs **cprofiles_merged.root** which merges the cherenkov profiles for all the simulated momenta. The second argument stands for **tr** (true) or **wt** (weighted) profiles.
 
 **Step 2** Run `integrate_cprofiles.py`: integrates the cherenkov profiles for each momenta to produce the $I_n = \int g(s, \cos\theta) s^n ~~ (n=0, 1, 2)$. Reads the **cprofiles_merged.root** (default) created at 2. Returns a **cprofiles_integrals.root** file.
 

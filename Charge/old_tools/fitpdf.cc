@@ -11,7 +11,9 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TFile.h>
-#include "/pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF.h"
+#include "/pbs/home/g/gdiazlop/Software/HK_Software/fiTQun/fiTQun.h"
+#include "/pbs/home/g/gdiazlop/Software/HK_Software/fiTQun/fiTQun_shared.h"
+#include "/pbs/home/g/gdiazlop/Software/HK_Software/fiTQun/fQChrgPDF.h"
 
 bool flgUseInputThrGraph=true;
 TGraph *gmuThrIn[2];
@@ -30,10 +32,7 @@ void GetmuThresh(double qval, double &muthrLo, double &muthrHi) {// Define thres
 }
 
 //iPMTType= 0:old, 1:new PMT
-int fitpdf(int iPMTType, int iSK_Ver){
-  
-  // gROOT->ProcessLine(".L fQChrgPDF.cc+");
-  // gROOT->ProcessLine(".L /pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF.cc++");
+void fitpdf(int iPMTType, int iSK_Ver){
   
   fQChrgPDF::Get()->SetGlobal_PMTType(iPMTType);
   
@@ -61,9 +60,14 @@ int fitpdf(int iPMTType, int iSK_Ver){
   cout << "# of q bins: " << nbnsY << endl;
   
   // Define range of q
-  const int nqRang = 3;// # of q range (excl. overflow bin)
-  double qRang[nqRang+1]={0.,1.45,29.5,1000.};// q range boundaries; each boundary has to be exactly at a bin center!
-  const int nparam_Arr[nqRang+1]={4,6,4,6};// # of parameters in each q range(+ overflow bin)
+  // const int nqRang = 3;// # of q range (excl. overflow bin)
+  // double qRang[nqRang+1]={0.,1.45,29.5,1000.};// q range boundaries; each boundary has to be exactly at a bin center!
+  // const int nparam_Arr[nqRang+1]={4,6,4,6};// # of parameters in each q range(+ overflow bin)
+
+  // gonzalo
+  const int nqRang = 1;
+  double qRang[nqRang+1]={0.,1000.};
+  const int nparam_Arr[nqRang+1]={5};
   
   //  const double muthrHi_Satu[4]={250.,220.,220.,980.};// upper mu threshold for saturation bin for each SK era
   //  const double qSatu[4]={161.,155.,155.,802.5};// saturation value for each SK era

@@ -5,9 +5,9 @@ import uproot
 import ROOT
 import numpy  as np
 
-from os.path   import expandvars, join, basename, exists
+from os.path   import expandvars, join, basename
 
-from STable_tools import read_wcsim_geometry, split_tubeids, clockwise_angle
+from STable_tools import split_tubeids, clockwise_angle
 
 
 def main():
@@ -37,19 +37,11 @@ def main():
     args = parser.parse_args()
     ##########################################
 
-    # # Load TScatTable class from fiTQun
-    # filename = join(expandvars(args.fitqun), "TScatTableF_cc.so")
-    # if exists(filename): ROOT.gSystem.Load(filename)
-    # else:
-    #     if args.verbose: print("Compiling fiTQun TScatTableF.cc...")
-    #     ROOT.gROOT.SetMacroPath(expandvars(args.fitqun))
-    #     ROOT.gROOT.LoadMacro("TScatTableF.cc++")
-
     # Load WCSimRoot.so
     ROOT.gSystem.AddDynamicPath(expandvars(args.wcsimlib))
     ROOT.gSystem.Load          ("libWCSimRoot.dylib" if sys.platform == "darwin" else "libWCSimRoot.so")
 
-    # Load libfiTQunLib.so
+    # Load libfiTQunLib.so to access TScatTable class
     ROOT.gSystem.AddDynamicPath(expandvars(args.fitqunlib))
     ROOT.gSystem.Load          ("libfiTQunLib.so.dylib" if sys.platform == "darwin" else "libfiTQunLib.so")
 

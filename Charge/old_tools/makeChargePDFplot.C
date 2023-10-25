@@ -7,8 +7,8 @@
 #include "TSystem.h"
 #include "TBranch.h"
 #include "TTree.h"
-#include "/pbs/home/g/gdiazlop/Software/WCSim/install/include/WCSimRootEvent.hh"
-#include "/pbs/home/g/gdiazlop/Software/WCSim/install/include/WCSimRootGeom.hh"
+#include "/pbs/home/g/gdiazlop/Software/HK_Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13/include/WCSim/WCSimRootEvent.hh"
+#include "/pbs/home/g/gdiazlop/Software/HK_Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13/include/WCSim/WCSimRootGeom.hh"
 
 
 void makeChargePDFplot(std::string fNameWCSim, std::string fNameOut){

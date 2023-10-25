@@ -5,7 +5,7 @@ import numpy as np
 from os.path import exists, expandvars, join, basename
 
 
-ROOT.gSystem.Load("/pbs/home/g/gdiazlop/Software/WCSim/install/lib/libWCSimRoot.so")
+ROOT.gSystem.Load("/pbs/home/g/gdiazlop/Software/HK_Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13/lib/libWCSimRoot.so")
 
 if exists("makeChargePDFplot_C.so"): ROOT.gSystem.Load("makeChargePDFplot_C.so")
 else: ROOT.gROOT.LoadMacro("makeChargePDFplot.C++")

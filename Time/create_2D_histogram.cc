@@ -27,8 +27,9 @@ const double c0 = 29.9792458; // light velocity in vacuum [cm/ns]
 
 int main(int argc, char* argv[]){
 
-  //////////////////// Read arguments
-  /////////////////////////////////////////////
+  /////////////////////////////////
+  //  Read arguments
+  /////////////////////////////////
   if (argc<4) {
     cout << "Wrong number of arguments, at least 3 arguments are required:" << endl;
     cout << "infile" << endl;
@@ -39,7 +40,7 @@ int main(int argc, char* argv[]){
   // Read input directory
   char* indirectory = argv[1];
   if (!fs::exists(indirectory)) { cout << "Input directory does not exists" << endl; exit(-1);}
-  cout << "Input directory: " << argv[1] << ";" << indirectory << endl;
+  cout << "Input directory: " << indirectory << endl;
 
   // Read particle type
   string particle = argv[2];
@@ -63,8 +64,13 @@ int main(int argc, char* argv[]){
   if      (vaxis == 0) { R.RotateY(3.*pi/2.);}
   else if (vaxis == 1) { R.RotateX(pi/2.);}
 
+  // Set PC event statistics (min number of PC events to use, if enough are provided)
+  int pc_limit = 50000;
+  if (argc>6){pc_limit = atoi(argv[6]);}
+  cout << "PC event statistics set to " << pc_limit << endl;
+
   // Read histogram binning
-  if ((6<argc)&(argc<12)){ 
+  if ((7<argc)&(argc<13)){ 
     cout << "Wrong number of arguments for histogram binning, you must set the four arguments: nx xlow xupp ny ylow yupp" << endl;
     exit(-1);
   }
@@ -75,13 +81,13 @@ int main(int argc, char* argv[]){
   int    n_trueq   = 125;
   double trueq_low = -2;
   double trueq_upp = 3;
-  if (argc == 12){
-    n_tres    = atoi(argv[6]);
-    tres_low  = atof(argv[7]);
-    tres_upp  = atof(argv[8]);
-    n_trueq   = atoi(argv[9]);
-    trueq_low = atof(argv[10]);
-    trueq_upp = atof(argv[11]);
+  if (argc == 13){
+    n_tres    = atoi(argv[7]);
+    tres_low  = atof(argv[8]);
+    tres_upp  = atof(argv[9]);
+    n_trueq   = atoi(argv[10]);
+    trueq_low = atof(argv[11]);
+    trueq_upp = atof(argv[12]);
   }
 
   /////////////////////////////////////////////
@@ -94,7 +100,11 @@ int main(int argc, char* argv[]){
   double energy;
   int index;
   // Define regular expresion to match filenames
-  regex filename_pattern("out_" + particle + "_(-?\\d+(?:\\.\\d+)?)_(\\d+)\\.root");
+  // first note that if particle charge is positive, the + has to be sustituted by \\+
+  string particle_pattern = particle;
+  size_t pos = particle_pattern.find("+");
+  if (pos != std::string::npos) { particle_pattern.replace(pos, 1, "\\+");}
+  regex filename_pattern("out_" + particle_pattern + "_(-?\\d+(?:\\.\\d+)?)_(\\d+)\\.root");
 
   // Loop through files in directory and save them to "grouped_filenames" 
   // such that the files get grouped for each simulated energy
@@ -102,7 +112,6 @@ int main(int argc, char* argv[]){
     if (fs::is_regular_file(entry)) {
       fs::path full_filename = entry.path().string();
       string filename = full_filename.filename();
-
       // Find the "energy" and file "index"
       if (std::regex_search(filename, match, filename_pattern)){
         energy = std::stod(match[1]);
@@ -115,17 +124,73 @@ int main(int argc, char* argv[]){
     }
   }
 
-  // Load fiTQun parameters
+  ////////////////////////////////////////
+  //  Create fiTQun instance 
+  ////////////////////////////////////////
   TRuntimeParameters::Get().ReadParamOverrideFile(parameters_filename);
-  // Define needed fiTQun variables
-  int PID_index = -1;
+
+  // Load WCSim wrapper and get geometry (needed later)
+  char* filename = const_cast<char*> ((grouped_filenames.begin()->second[0]).c_str());
+
+  WCSimWrap    * wc       = WCSimWrap::Get(filename);
+  WCSimRootGeom* geometry = wc->Geo();
+  // Read first event:
+  wc->LoadEntry(0);
+
+  // Search the track of the parent particle (parenttype = 0, id = 1)
+  // The search starts at second track (first 2 tracks special, they correspond to beam and target which in this case are dummy)
+  WCSimRootTrigger* trigger = wc->SubEvt(0); // only trigger 0 is considered
+  TClonesArray    * tracks  = trigger->GetTracks();
+  WCSimRootTrack* track;
+  for (int i=2; i<tracks->GetEntries(); i++){
+    track = (WCSimRootTrack*) tracks->At(i);
+    if ((track->GetParenttype()==0)&(track->GetId()==1)){break;}
+  }
+  if ((!(track->GetParenttype()==0)&(track->GetId()==1))){
+    cout << "Not found track of parent particle for the first event" << endl;
+    exit(-1);
+  }
+
+  // define load_flag and PID_index
+  int PID_index;
   int load_flag[nPID] = {0};
-  // Create output file, to be filled
+  auto found = find(begin(fiTQun_shared::PIDarr), end(fiTQun_shared::PIDarr), track->GetIpnu());
+  if (found != std::end(fiTQun_shared::PIDarr)) {
+    PID_index = std::distance(std::begin(fiTQun_shared::PIDarr), found);
+    load_flag[PID_index] = 1;
+  }
+  else {
+    std::cout << "Unknown particle type: " << track->GetIpnu() << std::endl;
+    exit(-1);
+  }
+
+  // Finally create instance and load parameters
+  fiTQun       * fq       = new fiTQun(wc->NPMT());
+  fiTQun_shared* fqshared = fiTQun_shared::Get(wc->NPMT());
+
+  fq->ReadSharedParams(1,load_flag,true,true,1);
+  // fqshared->SetPhi0(-1.,1.); // ?
+
+  wc->Close();
+
+  ////////////////////////////////////////
+  //  Read WCSim trigger_offset from WCSim options
+  ////////////////////////////////////////
+  WCSimRootOptions* op = new WCSimRootOptions();
+  TFile* f = new TFile(filename);
+  TTree* optionsT = (TTree*) f->Get("wcsimRootOptionsT");
+  optionsT->SetBranchAddress("wcsimrootoptions",&op);
+  optionsT->GetEntry(0);
+  double trigger_offset = op->GetTriggerOffset();
+  f->Close();
+
+  ////////////////////////////////////////
+  //  Create output file, to be filled
+  ////////////////////////////////////////
   const char* ofilename = "tres_trueq_2Dhistogram.root";
   TFile* of = new TFile(ofilename, "RECREATE");
   of->Close();
   
-
   ////////////////////////////////////////
   // Loop through each energy value
   ////////////////////////////////////////
@@ -142,26 +207,15 @@ int main(int argc, char* argv[]){
     sort(entry.second.begin(), entry.second.end());
 
     // Read first file in group and extract the following information:
-    //    - detector geometry
     //    - trigger offset
-    //    - fiTQun load flag
     //    - particle momentum
     //    - maximum distance travelled for this particle with this momentum
     //    - instantiate fiTQun and fitqun_shared
 
     char* filename = const_cast<char*> (entry.second[0].c_str());
 
-    // Load WCSim wrapper and get geometry
-    WCSimWrap    * wc       = WCSimWrap::Get(filename);
-    WCSimRootGeom* geometry = wc->Geo();
-    // Read WCSim trigger_offset from WCSim options
-    WCSimRootOptions* op = new WCSimRootOptions();
-    TFile* f = new TFile(filename);
-    TTree* optionsT = (TTree*) f->Get("wcsimRootOptionsT");
-    optionsT->SetBranchAddress("wcsimrootoptions",&op);
-    optionsT->GetEntry(0);
-    double trigger_offset = op->GetTriggerOffset();
-    f->Close();
+    // Load WCSim wrapper
+    WCSimWrap* wc = WCSimWrap::Get(filename);
 
     // Read first event:
     wc->LoadEntry(0);
@@ -170,7 +224,7 @@ int main(int argc, char* argv[]){
     // The search starts at second track (first 2 tracks special, they correspond to beam and target which in this case are dummy)
     WCSimRootTrigger* trigger = wc->SubEvt(0); // only trigger 0 is considered
     TClonesArray    * tracks  = trigger->GetTracks();
-    WCSimRootTrack* track;
+    WCSimRootTrack  * track;
     for (int i=2; i<tracks->GetEntries(); i++){
       track = (WCSimRootTrack*) tracks->At(i);
       if ((track->GetParenttype()==0)&(track->GetId()==1)){break;}
@@ -180,27 +234,6 @@ int main(int argc, char* argv[]){
       exit(-1);
     }
 
-    // Find particle index and define load_flag required by fiTQun
-    // Only evaluate this once
-    if (PID_index == -1){
-      auto found = find(begin(fiTQun_shared::PIDarr), end(fiTQun_shared::PIDarr), track->GetIpnu());
-      if (found != std::end(fiTQun_shared::PIDarr)) {
-            PID_index = std::distance(std::begin(fiTQun_shared::PIDarr), found);
-            load_flag[PID_index] = 1;
-      }
-      else {
-        std::cout << "Unknown particle type: " << track->GetIpnu() << std::endl;
-        exit(-1);
-      }
-    }
-    
-    // Get a fiTQun instance
-    fiTQun       * fq       = new fiTQun(wc->NPMT());
-    fiTQun_shared* fqshared = fiTQun_shared::Get(wc->NPMT());
-
-    fq->ReadSharedParams(1,load_flag,true,true,1);
-    // fqshared->SetPhi0(-1.,1.); // ?
-
     // Get momentum
     double momentum = track->GetP();
     momenta.push_back(momentum);
@@ -208,23 +241,25 @@ int main(int argc, char* argv[]){
     // Compute the smax value for this particle and momentum
     double Iiso[2], nphot, smax;
     fiTQun_shared::Get()->SetTypemom(PID_index, momentum, Iiso, nphot, smax);
+
+    wc->Close();
     
     // Define the 2D time pdf histograms to be filled
-    const char* hname_direct = ("htimepdf_direct_" + to_string(momentum)).c_str();
-    TH2D hdirect(hname_direct,"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
-    hdirect.Sumw2();
+    string hname_direct = "htimepdf_direct_" + to_string(momentum);
+    TH2D* hdirect = new TH2D(hname_direct.c_str(),"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
+    hdirect->Sumw2();
 
-    const char* hname_indirect = ("htimepdf_indirect_" + to_string(momentum)).c_str();
-    TH2D hindirect(hname_indirect,"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
-    hindirect.Sumw2();
+    string hname_indirect = "htimepdf_indirect_" + to_string(momentum);
+    TH2D* hindirect = new TH2D(hname_indirect.c_str(),"", n_tres, tres_low, tres_upp, n_trueq, trueq_low, trueq_upp);
+    hindirect->Sumw2();
 
     //////////////////////////////////////////
     // Loop through each file
     //////////////////////////////////////////
-    cout << "" << filename << endl;
-    cout << "Loop throught files" << endl;
+    cout << " " << filename << endl;
+    cout << "Looping through files" << endl;
     int ntotal_counter = 0;
-    int npc_counter = 0;
+    int npc_counter    = 0;
     for (const fs::path& path : entry.second) {
 
       char* filename = const_cast<char*> (path.c_str());
@@ -237,7 +272,7 @@ int main(int argc, char* argv[]){
       ntotal_counter += wc->NEvt();
       for (int event = 0; event < wc->NEvt(); event++){
         
-        cout << "Processing event " << (event+1) << "/" << wc->NEvt() << endl;
+        // cout << "Processing event " << (event+1) << "/" << wc->NEvt() << endl;
         wc->LoadEntry(event);
 
         // Repeat the code above to find the parent track, if parent not found, continue processing next event
@@ -272,11 +307,11 @@ int main(int argc, char* argv[]){
         // Direct
         fqshared->SetScatflg(0);
         double true_q_direct[nPMT_max];
-        fq->Get1Rmudist(PID_index, track_params, true_q_direct);
+        int isPC = fq->Get1Rmudist(PID_index, track_params, true_q_direct);
         // Total
         fqshared->SetScatflg(1);
         double true_q_total[nPMT_max];
-        int isPC = fq->Get1Rmudist(PID_index, track_params, true_q_total);
+        fq->Get1Rmudist(PID_index, track_params, true_q_total);
 
         // If the event is PC, isPC = 1
         if (isPC == 0) {
@@ -297,13 +332,18 @@ int main(int argc, char* argv[]){
             double t = trigger_offset - trigger->GetHeader()->GetDate();
             double t_residual = digi_hit->GetT() - t - (smax/2.)/c0 - midtrack_pmt_distance*n_water/c0;
 
-            hdirect  .Fill(t_residual, log10(true_q_direct[pmtid]));
-            hindirect.Fill(t_residual, log10(true_q_total [pmtid] - true_q_direct[pmtid]));
+            hdirect  ->Fill(t_residual, log10(true_q_direct[pmtid]));
+            hindirect->Fill(t_residual, log10(true_q_total [pmtid] - true_q_direct[pmtid]));
           }
         }
-        else{ npc_counter += 1;}
+        else { npc_counter += 1;}
       }
-      break;
+
+      wc->Close();
+
+      // break if statistics enough
+      cout << "# Processed PC events: " << ntotal_counter - npc_counter << endl;
+      if ((ntotal_counter - npc_counter) >= pc_limit){break;}
     }
 
     // Append number of total and pc events
@@ -313,10 +353,13 @@ int main(int argc, char* argv[]){
     // Write timepdf to output file
     cout << "Writing to " << ofilename << std::endl;
     TFile* of = new TFile(ofilename, "UPDATE");
-    hdirect  .Write();
-    hindirect.Write();
+    hdirect  ->Write();
+    hindirect->Write();
     of->Close();
-    cout << "" << endl;
+    cout << " " << endl;
+
+    delete hdirect;
+    delete hindirect;
   }
 
   // Define and write graphs for total and PC events

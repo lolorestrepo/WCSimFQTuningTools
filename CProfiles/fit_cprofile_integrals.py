@@ -190,7 +190,7 @@ def main():
     hprofinf.SetBinContent(1, npars)
     hprofinf.SetBinContent(2, nsectmax)          # not really used in fiTQun
     hprofinf.SetBinContent(3, 0)                 # momentum ofset
-    hprofinf.SetBinContent(4, 0.2)               # momentum step (?)
+    hprofinf.SetBinContent(4, np.min(np.diff(np.log(mbins)))) # momentum step (?)
     hprofinf.SetBinContent(5, np.log(mbins[0]))  # min momentum
     hprofinf.SetBinContent(6, np.log(mbins[-1])) # max momentum
     fout.WriteObject(hprofinf, "hprofinf")

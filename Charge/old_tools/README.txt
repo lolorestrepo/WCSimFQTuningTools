@@ -7,10 +7,11 @@ makeChargePDFplot.C:
 
 
 gen2d.cc:
-  .L gen2d.cc++
+  .L gen2d.cc
   gen2d()
 
 fitpdf.cc:
-  .L /pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF.cc++
-  .L /pbs/home/g/gdiazlop/Software/fiTQun/fiTQun/fQChrgPDF_cc.so
-  .L fitpdf.cc++
+  .L /pbs/home/g/gdiazlop/Software/HK_Software/fiTQun/fQChrgPDF.cc++
+  .L /pbs/home/g/gdiazlop/Software/HK_Software/fiTQun/fQChrgPDF_cc.so
+  .L fitpdf.cc
+  fitpdf(0, 1)

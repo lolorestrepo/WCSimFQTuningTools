@@ -23,9 +23,11 @@ The first step for the **timePDF** production is to create the 2D histogram of r
 To simplify the process, a bash script *compile_create_2D_histogram.sh* is provided so you only need to modify the parameters therein. In particular, set the correct paths to your **WCSim**, **fiTQun**, and **ROOT** installations. To run the compilled executable *create_2D_histogram*, first define FITQUN_ROOT as the path to your **fiTQun** directory containing the **const/** directory with the tunning files.
 
     export FITQUN_ROOT=/path/to/fiTQun/sourcedir/
-    ./create_2D_histogram input_file particle_name parameters_file water_refractive_index vertical_axis binning_parameters
+    ./create_2D_histogram input_file particle_name parameters_file water_refractive_index vertical_axis max-statistics binning_parameters
 
 **TODO**: Explain the parameters
+ - `statistics-limit` uses at least this many no-PC events in the computation
+ - `water_refractive_index` should be the same as the fiTQun.WaterRefractiveIndex used in fiTQun
 
 ### The fits
 
@@ -38,3 +40,7 @@ where `npars_gauss` is the number of parameters (degree + 1) of the polynomia fi
 $$ (\mu, \sigma) (p, \mu^{dir}) = \sum_{i=0}^{n_{gauss}} a_i(p)~\mu^{dir}$$
 
 $$ a_i(p) = \sum_{j=0}^{n_{pars}} b_{ij}~p^j$$
+
+
+### The indirect time pdf
+The parameters of the indirect time pdf are computed in the `fit_timepdf.py`. Nevertheless, since the values are hardcoded in **fiTQun** you should set them manually, threfore my recommended way to check the parameters is through the `histogram.ipynb` Jupyter-Notebook.
