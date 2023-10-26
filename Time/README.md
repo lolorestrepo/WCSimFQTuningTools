@@ -33,9 +33,9 @@ To simplify the process, a bash script *compile_create_2D_histogram.sh* is provi
 
 To produce the fits, run the `fit_timepdf.py` script as:
 
-`fit_timepdf.py [-v] [--npars_gauss n1] [--npars_pars n2]`,
+`fit_timepdf.py [-v] [--min_entries n0] [--npars_gauss n1] [--npars_pars n2]`,
 
-where `npars_gauss` is the number of parameters (degree + 1) of the polynomia fitting the mean and sigma of the fitted gaussians; and `npars_pars` is the number of parameters used to fit the previous parameters.
+where `min_entries` is the minimum number of entries in the $t^{res}$ distributions required to perform the gaussian fit; `npars_gauss` is the number of parameters (degree + 1) of the polynomia fitting the mean and sigma of the fitted gaussians; and `npars_pars` is the number of parameters used to fit the previous parameters.
 
 $$ (\mu, \sigma) (p, \mu^{dir}) = \sum_{i=0}^{n_{gauss}} a_i(p)~\mu^{dir}$$
 

@@ -35,6 +35,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument(  "--infile",   type=str, nargs="?", help = "time 2D file", default="tres_trueq_2Dhistogram.root")
 
+    parser.add_argument( "--min_entries", type=int, nargs="?", help = "min number of entries", default=100)
     parser.add_argument( "--npars_gauss", type=int, nargs="?", help = "number of parameters", default=7)
     parser.add_argument( "--npars_pars" , type=int, nargs="?", help = "number of parameters", default=7)
     
@@ -43,6 +44,7 @@ def main():
 
     # Config variables
     infilename  = args.infile
+    min_entries = args.min_entries
     npars_gauss = args.npars_gauss
     npars_pars  = args.npars_pars
 
@@ -91,7 +93,7 @@ def main():
             norm = np.sum(proj * (tresbins[1:] - tresbins[:-1]))
 
             # do the fit (only if number of entries is enough)
-            if (proj.sum()<45): pars = [np.nan, np.nan]
+            if (proj.sum()<min_entries): pars = [np.nan, np.nan]
             else:
                 try:
                     pars, cov = curve_fit(gaussian, tress, proj/norm, p0=[0, 0.1], method="trf")
