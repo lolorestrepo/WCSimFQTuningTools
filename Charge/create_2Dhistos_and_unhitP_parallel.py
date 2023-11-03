@@ -149,7 +149,7 @@ def main():
         return (1. + a1*x + a2*x**2 + a3*x**3)*np.exp(-x)
     
     # perform fit
-    popt, _ = curve_fit(PUnhit_func, mus, 1.-Phit)
+    popt, _ = curve_fit(PUnhit_func, mus, 1.-Phit, bounds=(0, [np.inf, np.inf, np.inf]))
     
     # Save fit parameters
     th1d = ROOT.TH1D("hPunhitPar", "c_n for P(unhit|#mu)", 10, 0.5, 10.5)
