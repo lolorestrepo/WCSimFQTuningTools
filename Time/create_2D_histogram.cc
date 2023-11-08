@@ -199,6 +199,10 @@ int main(int argc, char* argv[]){
   vector<double> momenta;
   vector<double> ntotal;
   vector<double> npc;
+  // Save conversion between nphotons and total charge
+  vector<double> nphotons;
+  vector<double> totalqs;
+
   for (auto& entry : grouped_filenames) {
 
     cout << "--------------------" << endl;
@@ -241,6 +245,7 @@ int main(int argc, char* argv[]){
     // Compute the smax value for this particle and momentum
     double Iiso[2], nphot, smax;
     fiTQun_shared::Get()->SetTypemom(PID_index, momentum, Iiso, nphot, smax);
+    nphotons.push_back(nphot);
 
     wc->Close();
     
@@ -260,6 +265,7 @@ int main(int argc, char* argv[]){
     cout << "Looping through files" << endl;
     int ntotal_counter = 0;
     int npc_counter    = 0;
+    double totalq      = 0;
     for (const fs::path& path : entry.second) {
 
       char* filename = const_cast<char*> (path.c_str());
@@ -334,6 +340,8 @@ int main(int argc, char* argv[]){
 
             hdirect  ->Fill(t_residual, log10(true_q_direct[pmtid]));
             hindirect->Fill(t_residual, log10(true_q_total [pmtid] - true_q_direct[pmtid]));
+
+            totalq += true_q_total [pmtid];
           }
         }
         else { npc_counter += 1;}
@@ -346,15 +354,16 @@ int main(int argc, char* argv[]){
       if ((ntotal_counter - npc_counter) >= pc_limit){break;}
     }
 
-    // Append number of total and pc events
-    ntotal.push_back(ntotal_counter);
-    npc   .push_back(npc_counter);
+    // Append number of total and pc events, and mean charge per event
+    ntotal .push_back(ntotal_counter);
+    npc    .push_back(npc_counter);
+    totalqs.push_back(totalq/(ntotal_counter-npc_counter));
 
     // Write timepdf to output file
     cout << "Writing to " << ofilename << std::endl;
     TFile* of = new TFile(ofilename, "UPDATE");
-    hdirect  ->Write();
-    hindirect->Write();
+    hdirect    ->Write();
+    hindirect  ->Write();
     of->Close();
     cout << " " << endl;
 
@@ -362,14 +371,17 @@ int main(int argc, char* argv[]){
     delete hindirect;
   }
 
-  // Define and write graphs for total and PC events
+  // Define and write graphs for total and PC events, and conversion nphotons-charge
   TGraph* gntotal = new TGraph(momenta.size(), momenta.data(), ntotal.data());
   TGraph* gnpc    = new TGraph(momenta.size(), momenta.data(), npc   .data());
+  TGraph* gconv   = new TGraph(nphotons.size(), nphotons.data(), totalqs.data());
   gntotal->SetName("Total");
   gnpc   ->SetName("PC");
+  gconv  ->SetName("Conversion");
   of = new TFile(ofilename, "UPDATE");
   gntotal->Write();
   gnpc   ->Write();
+  gconv  ->Write();
   of->Close();
 
   return 0;
