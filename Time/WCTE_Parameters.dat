@@ -7,39 +7,60 @@ WCSim related parameters
  < fiTQun.WCSimPMTType = 3inchPMTR12199_02 >
  < fiTQun.WaterAttenuationLengthWCSim = 6800. > Attenuation Lenght used in T(R) factor
  < fiTQun.PeakThrWCSim      = 12.7 > (?)
- < fiTQun.DarkRateWCSim     = 0 > correct
- < fiTQun.QEEffWCSim        = 0.293 > (?) Used when evaluating the timepdf. Previous value 0.275, 0.286
- < fiTQun.QEEffCorrWCSim    = 1.0 > Probably correct, see /WCSim/tuning/qeff
- < fiTQun.QmuConvFactWCSim  = 1.0 > (?)
- < fiTQun.GainCorrFactWCSim = 1.0 > (?)
+ < fiTQun.DarkRateWCSim     = 0.1  > # need to be > 0, if not hit Prob=0, then log(Prob) = -inf 
+ < fiTQun.QEEffWCSim        = 0.19 > # important: computed with the mean value of https://github.com/WCSim/WCSim/blob/508757bc1a1b8ce87bba5ab659ce8b81d9b25696/src/WCSimPMTObject.cc#L2694
+ < fiTQun.QEEffCorrWCSim    = 1.0  > (?)
+ < fiTQun.QmuConvFactWCSim  = 1.0  > (?)
+ < fiTQun.GainCorrFactWCSim = 1.0  > (?)
 
 WCSim not tuned parameters.
- < fiTQun.PIDCutEPipa0WCSim = 0. >
- < fiTQun.PIDCutEPipa1WCSim = 0. >
- < fiTQun.PIDCutMuPip0WCSim = 0. >
- < fiTQun.PIDCutMuPip1WCSim = 0. >
+ < fiTQun.PIDCutEPipa0WCSim =  0. >
+ < fiTQun.PIDCutEPipa1WCSim =  0. >
+ < fiTQun.PIDCutMuPip0WCSim =  0. >
+ < fiTQun.PIDCutMuPip1WCSim =  0. >
  < fiTQun.RCCuta0WCSim      = -1. >
- < fiTQun.RCCuta1WCSim      = 0. >
- < fiTQun.RCCut1Ea0WCSim    = 0. >
- < fiTQun.RCCut1Mua0WCSim   = 0. >
+ < fiTQun.RCCuta1WCSim      =  0. >
+ < fiTQun.RCCut1Ea0WCSim    =  0. >
+ < fiTQun.RCCut1Mua0WCSim   =  0. >
 
-Turn off proton fit by default. The Time PDF files for protons haven't been produced yet
+
+Which fits? (what is upstream fit?)
+ < fiTQun.DoElectron1RFit  = 1 >
+ < fiTQun.DoMuon1RFit      = 1 >
+ < fiTQun.DoPionPlus1RFit  = 1 > 
  < fiTQun.DoProton1RFit    = 0 >
  < fiTQun.DoPDK_MuGammaFit = 0 >
 
- Multi-ring parameters not tuned yet, run all fits up to 3-ring by default.
- < fiTQun.DoMRFit = 3 >
+ < fiTQun.DoPi0Fit    = 0 >
+ < fiTQun.DoPi0Fit2   = 0 >
+ < fiTQun.DoPiPlusFit = 0 > (difference with fiTQun.DoPionPlus1RFit ?)
+ < fiTQun.DoGamma2ElecFit = 0 >
+
+< fiTQun.DecayESearch = 0 >
+
+Dont do MR and MS fits (Multi-ring parameters not tuned yet)
+ < fiTQun.DoMRFit = 0 >
+ < fiTQun.DoMSFit = 0 >
 
 Fit parameters
- < fiTQun.UseTimeLikelihood   = 1 > Set to 1 to use time likelihoods
- < fiTQun.QECorrElectron1RFit = 1.0 > (?)
- < fiTQun.QECorrMuon1RFit     = 0.976 > Previous value 1.0 (?)
- < fiTQun.DoBiasCorrection    = 0 > Set to 1 if you want to apply empirical bias corrections to fit results
- < fiTQun.UseScatteredLight   = 1 > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
- < fiTQun.TotalChargeConstraintWeight = 4 > Weight of the total charge constraint term in the likelihood function.
+ < fiTQun.fQuiet = 1 >
+ < fiTQun.TuningMode = 0 >
+ < fiTQun.DoSubEvent = 1 >
+ < fiTQun.PeakSearchVtx = 0 > Prefit 1R assuming electron
+ < fiTQun.UseTimeLikelihood   = 1   > Set to 1 to use time likelihoods
+ < fiTQun.QECorrGamma1RFit    = 1.0 >
+ < fiTQun.QECorrElectron1RFit = 1.0 >
+ < fiTQun.QECorrMuon1RFit     = 1.0 >
+ < fiTQun.QECorrPionPlus1RFit = 1.0 >
+ < fiTQun.QECorrKaonPlus1RFit = 1.0 >
+ < fiTQun.QECorrProton1RFit   = 1.0 >
+ < fiTQun.QECorrConeGenerator1RFit = 1.0 >
+ < fiTQun.DoBiasCorrection    = 0   >
+ < fiTQun.UseScatteredLight   = 1   > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
+ < fiTQun.TotalChargeConstraintWeight = 4 > (?) Weight of the total charge constraint term in the likelihood function.
 
 Indirect light time pdf parameters
- < fiTQun.inDirtPDFGamma = 13.0  > Previous 6.55
- < fiTQun.inDirtPDFSigma = 1.50  > Previous 5.39
- < fiTQun.inDirtPDFt0    = -1.20 > Previous 9.88
+ < fiTQun.inDirtPDFGamma =  0.5  >
+ < fiTQun.inDirtPDFSigma =  1.08 >
+ < fiTQun.inDirtPDFt0    = -0.77 >
 

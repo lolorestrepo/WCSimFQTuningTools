@@ -189,7 +189,7 @@ def main():
     hprofinf = ROOT.TH1F("hprofinf", "hprofinf", 6,  np.arange(-0.5, 6.5, 0.5))
     hprofinf.SetBinContent(1, npars)
     hprofinf.SetBinContent(2, nsectmax)          # not really used in fiTQun
-    hprofinf.SetBinContent(3, 0)                 # momentum ofset
+    hprofinf.SetBinContent(3, 0)                 # momentum offset
     hprofinf.SetBinContent(4, np.min(np.diff(np.log(mbins)))) # momentum step (?)
     hprofinf.SetBinContent(5, np.log(mbins[0]))  # min momentum
     hprofinf.SetBinContent(6, np.log(mbins[-1])) # max momentum

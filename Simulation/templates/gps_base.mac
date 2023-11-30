@@ -16,8 +16,7 @@
 /DarkRate/SetDarkRate 0.1 kHz
 /DarkRate/SetConvert 1.367
 
-/mygen/generator gun
-/gun/particle e-
-/gun/energy 1 keV
-/gun/direction 1 0 0 
-/gun/position 0 0 0
+/mygen/generator gps
+/gps/ene/type  Mono
+/gps/position  0 0 0 cm
+/gps/direction 1 0 0

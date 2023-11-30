@@ -261,7 +261,6 @@ int main(int argc, char* argv[]){
     //////////////////////////////////////////
     // Loop through each file
     //////////////////////////////////////////
-    cout << " " << filename << endl;
     cout << "Looping through files" << endl;
     int ntotal_counter = 0;
     int npc_counter    = 0;
@@ -350,7 +349,7 @@ int main(int argc, char* argv[]){
       wc->Close();
 
       // break if statistics enough
-      cout << "# Processed PC events: " << ntotal_counter - npc_counter << endl;
+      cout << "# Processed events: " << ntotal_counter - npc_counter << endl;
       if ((ntotal_counter - npc_counter) >= pc_limit){break;}
     }
 

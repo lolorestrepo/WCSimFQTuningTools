@@ -97,7 +97,6 @@ def main():
         ihPMT   = ihPMT  [sel_normal]
         tubepos = tubepos[sel_normal]
 
-
         # get PMT orientation
         tubedir = pmts_df.loc[ihPMT, ["Orientation_x0", "Orientation_x1", "Orientation_x2"]].values.astype(float)
 
@@ -114,8 +113,8 @@ def main():
         modr = np.sqrt(np.sum(r**2, axis=1))
         # select only photons within maximum possible distance
         sel_r = modr < rbins[-1]  # the < instead <= is used to avoid out of bound at np.digitize below
-        r       = r[sel_r]
-        modr    = modr[sel_r]
+        r       =       r[sel_r]
+        modr    =    modr[sel_r]
         tubepos = tubepos[sel_r]
         tubedir = tubedir[sel_r]
         # compute angles
