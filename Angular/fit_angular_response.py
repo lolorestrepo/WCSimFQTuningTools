@@ -5,6 +5,12 @@ import ROOT
 import numpy  as np
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
+
+
+def polynomial(x, *coefficients):
+    return np.polyval(coefficients, x)
+
 
 def main():
 
@@ -36,7 +42,7 @@ def main():
     
     # compute bin centers and fit angular response
     etas = (etabins[1:] + etabins[:-1])/2.
-    pars = np.polyfit(etas, e, polydeg)
+    pars, _ = curve_fit(polynomial, etas, e, p0=np.ones(polydeg + 1)/2., bounds=(0, np.ones(polydeg + 1)))
     
     # create polynomial TF1 and set the computed parameters
     tf1 = ROOT.TF1("angResp", f"pol{polydeg}", etabins[0], etabins[-1])
