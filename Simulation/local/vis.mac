@@ -4,16 +4,30 @@
 
 /vis/geometry/set/forceWireframe all -1 true
 
-/vis/geometry/set/visibility WC              0 true
-/vis/geometry/set/visibility WCBarrel        0 true
-/vis/geometry/set/visibility WCBarrelRing    0 true
-/vis/geometry/set/visibility WCBarrelAnnulus 0 true
-/vis/geometry/set/visibility CapAssembly     0 true
-#/vis/geometry/set/visibility WCMultiPMT      0 false
+# white background, black volumes
+/vis/viewer/set/background white
+/vis/geometry/set/colour all -1 0 0 0
+/vis/modeling/trajectories/create/drawByParticleID # draw black cherenkov
+
+
+/vis/geometry/set/visibility WC              0 false
+/vis/geometry/set/visibility WCBarrel        0 false
+/vis/geometry/set/visibility WCBarrelRing    0 false
+/vis/geometry/set/visibility WCBarrelAnnulus 0 false
+/vis/geometry/set/visibility WCBarrelCell    0 false
+/vis/geometry/set/visibility BotCapAssembly  0 true
+/vis/geometry/set/visibility TopCapAssembly  0 true
+/vis/geometry/set/visibility WCBarrelTopBorderRing 0 false
+/vis/geometry/set/visibility WCBarrelBotBorderRing 0 false
+/vis/geometry/set/visibility WCTopCapPolygon 0 false
+/vis/geometry/set/visibility WCBotCapPolygon 0 false
+
+#/vis/geometry/set/visibility InteriorWCPMT 0 true
+#/vis/geometry/set/visibility WCMultiPMT    0 false
 
 #/vis/geometry/set/forceSolid WCMultiPMT 0 true
 #/vis/geometry/set/colour WCMultiPMT 0 1 0 0 1
 
-/Tracking/fractionOpticalPhotonsToDraw 0.1
+/Tracking/fractionOpticalPhotonsToDraw 1
 /vis/scene/add/trajectories
 /vis/scene/add/axes 0 0 0 5 m

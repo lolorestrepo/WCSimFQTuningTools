@@ -1,3 +1,6 @@
+# hdf files
+*.h5
+
 # compiled ROOT macros
 *.so 
 *.pcm 

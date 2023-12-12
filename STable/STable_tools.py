@@ -24,8 +24,8 @@ def read_wcsim_geometry(filename):
     # general info
     df = pd.DataFrame()
     df = pd.DataFrame(columns=["WC"])
-    df.loc["WCCylRadius"] = geom.GetWCCylRadius() * 10
-    df.loc["WCCylLength"] = geom.GetWCCylLength() * 10
+    df.loc["WCCylRadius"] = geom.GetWCCylRadius()
+    df.loc["WCCylLength"] = geom.GetWCCylLength()
     df.loc["Geo_Type"]    = geom.GetGeo_Type   ()
     df.loc["WCNumPMT"]    = geom.GetWCNumPMT   ()
     df.loc["WCPMTRadius"] = geom.GetWCPMTRadius()
@@ -46,7 +46,7 @@ def read_wcsim_geometry(filename):
 
         for j in range(3):
             pmts_df.loc[i, f"Orientation_x{j}"] = pmt.GetOrientation(j)
-            pmts_df.loc[i, f"Position_x{j}"]    = pmt.GetPosition(j)*10
+            pmts_df.loc[i, f"Position_x{j}"]    = pmt.GetPosition(j)
     
     rootf.Close()
     return (df, pmts_df)

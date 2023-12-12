@@ -43,7 +43,7 @@ def main():
 
     # Load libfiTQunLib.so to access TScatTable class
     ROOT.gSystem.AddDynamicPath(expandvars(args.fitqunlib))
-    ROOT.gSystem.Load          ("libfiTQunLib.so.dylib" if sys.platform == "darwin" else "libfiTQunLib.so")
+    ROOT.gSystem.Load          ("libfiTQunLib.dylib" if sys.platform == "darwin" else "libfiTQunLib.so")
 
     # get simulation filenames, removing those ending in '_flat.root'
     infiles = glob.glob(join(args.indir[0], "*"))
