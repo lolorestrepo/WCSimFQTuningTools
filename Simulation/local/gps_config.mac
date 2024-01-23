@@ -1,0 +1,15 @@
+/control/execute   gps_base.mac
+/WCSim/random/seed 1
+
+/mygen/generator gps
+/gps/ene/type  Mono
+/gps/position  25 25 25 cm
+/gps/direction 1 0 0
+/gps/particle  e-
+/gps/energy    300 MeV
+
+#/fqTune/mode killScatterRef
+
+#/WCSimIO/RootFile  ./out/out_e-_pos_25_25_25_dir_1_0_0_ene_300.root
+/WCSimIO/RootFile  ./out/out.root
+
