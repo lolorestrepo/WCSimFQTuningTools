@@ -15,7 +15,7 @@
 
 /DAQ/Digitizer SKI
 /DAQ/Trigger NDigits
-/control/execute macros/daq.mac
+/control/execute daq.mac
 /DarkRate/SetDarkMode 1
 /DarkRate/SetDarkHigh 100000
 /DarkRate/SetDarkLow 0
