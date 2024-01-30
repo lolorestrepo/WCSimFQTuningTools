@@ -8,8 +8,7 @@ source ROOT_INSTALLDIR/bin/thisroot.sh
 
 source WCSIM_INSTALLDIR/setup.sh
 
-mkdir $SCRATCHDIR/mPMT-configfiles 
-cp WCSIM_INSTALLDIR/mPMT-configfiles/mPMTconfig_Position_WCTE_RotateBarrelHalfTower.txt $SCRATCHDIR/mPMT-configfiles
+cp WCSIM_INSTALLDIR/data/mPMT_Position_WCTE.txt    $SCRATCHDIR
 cp WCSIM_INSTALLDIR/macros/daq.mac                 $SCRATCHDIR
 cp WCSIM_INSTALLDIR/macros/jobOptions.mac          $SCRATCHDIR
 cp WCSIM_INSTALLDIR/macros/tuning_parameters.mac   $SCRATCHDIR
