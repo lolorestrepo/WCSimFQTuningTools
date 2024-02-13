@@ -14,6 +14,7 @@ dependencies = [
     "pandas",
     "uproot",
     "scipy",
+    "numba",
     "wcsim-hdf5"
 ]
 
