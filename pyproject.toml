@@ -25,7 +25,7 @@ where = ["."]
 compute_angular_responses = "Angular.compute_angular_responses:main"
 fit_angular_responses     = "Angular.fit_angular_responses:main"
 
-create_charge_2Dhistos_and_unhitP = "Charge.create_2Dhistos_and_unhitP_parallel:main"
+create_charge_2Dhistos_and_unhitP = "Charge.create_charge_2Dhistos_and_unhitP_parallel:main"
 fit_charge_pdfs                   = "Charge.fit_charge_pdfs:main"
 
 merge_cprofiles        = "CProfiles.merge_cprofiles_parallel:main"
