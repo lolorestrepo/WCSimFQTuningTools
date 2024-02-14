@@ -4,11 +4,9 @@ import glob
 import argparse
 import uproot
 import ROOT
-import multiprocessing
 import concurrent.futures
 import numpy  as np
 import tables as tb
-import psutil
 
 from os.path   import expandvars, join, basename
 
@@ -17,7 +15,7 @@ from STable.STable_tools import split_tubeids, clockwise_azimuth_angle, read_wcs
 
 def process_table(infiles, tabname, bins, tubeids, vaxis, R, verbose):
 
-    if verbose: print(f">> Creating {tabname:6} table... Core id {psutil.Process().cpu_num()}")
+    if verbose: print(f">> Creating {tabname:6} table...")
 
     # Define scattering tables, notice the only change beside name and title is the use of R_PMT (bottom and top) and z_PMT (side)
     h_indirect = np.zeros(shape=tuple(  [len(bins_)-1 for bins_ in bins]))
@@ -192,21 +190,26 @@ def main():
     # paralellize loop over tables to fill histograms
     results         = dict()
     future_to_table = dict()
-    if args.verbose: print("Number of cores:", len(os.sched_getaffinity(0)))
-    with concurrent.futures.ProcessPoolExecutor(max_workers=len(os.sched_getaffinity(0))) as executor:
-        for tabname in tabnames:
-            bins_ = bins.copy()
-            if tabname == "side": bins_.append(zPMTbins)
-            else                : bins_.append(RPMTbins)
-            future_to_table[executor.submit(process_table, infiles, tabname, bins_, tubeids[tabname], args.vaxis, R, args.verbose)] = tabname
 
-        # get results once all the tasks are finished
-        for future in concurrent.futures.as_completed(future_to_table):
-            h_indirect, h_direct = future.result()
-            tabname = future_to_table[future]
-            results[tabname] = (h_indirect, h_direct)
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+    #     for tabname in tabnames:
+    #         bins_ = bins.copy()
+    #         if tabname == "side": bins_.append(zPMTbins)
+    #         else                : bins_.append(RPMTbins)
+    #         future_to_table[executor.submit(process_table, infiles, tabname, bins_, tubeids[tabname], args.vaxis, R, args.verbose)] = tabname
+
+    #     # get results once all the tasks are finished
+    #     for future in concurrent.futures.as_completed(future_to_table):
+    #         h_indirect, h_direct = future.result()
+    #         tabname = future_to_table[future]
+    #         results[tabname] = (h_indirect, h_direct)
 
     for tabname in tabnames:
+        bins_ = bins.copy()
+        if tabname == "side": bins_.append(zPMTbins)
+        else                : bins_.append(RPMTbins)
+        results[tabname] = process_table(infiles, tabname, bins_, tubeids[tabname], args.vaxis, R, args.verbose)
+
         # Scattering tables
         if args.verbose: print(f">> Writting {tabname} table...")
 
