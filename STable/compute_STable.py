@@ -60,13 +60,6 @@ def main():
     # get bottom, top and side tube-ids from the first file
     tubeid_bottom, tubeid_top, tubeid_side = split_tubeids(infiles[0], vaxis=vaxis)
 
-    # this lines are commented because these parameter definitions ere misleading in WCSim
-    # # Define TScatTable 6D histogram
-    # df, _     = read_wcsim_geometry(infiles[0])
-    # tube_ztop = df.loc["WCCylLength", "WC"]/2.  # detector cylinder half-length
-    # tube_rad  = df.loc["WCPMTRadius", "WC"]     # PMT module radius
-    # cyl_rad   = df.loc["WCCylRadius", "WC"]     # detector cylinder radius
-
     # Define scatering table binning
     # 6 variables
     # zs: source z position

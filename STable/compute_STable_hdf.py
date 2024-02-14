@@ -127,8 +127,8 @@ def main():
 
     # this lines are commented because these parameter definitions ere misleading in WCSim
     df, pmts = read_wcsim_geometry(infiles[0])
-    length = df.loc["WCCylLength", "WC"]
-    radius = df.loc["WCCylRadius", "WC"]
+    length = df.loc["WCDetHeight", "WC"]/2.
+    radius = df.loc["WCDetRadius", "WC"]
 
     # rotate pmt positions and orientations
     poscolumns = [f"Position_x{i}"    for i in range(3)]

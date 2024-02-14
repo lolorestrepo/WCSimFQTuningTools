@@ -1,4 +1,5 @@
 import ROOT
+import uproot
 import itertools
 import numpy  as np
 import pandas as pd
@@ -45,7 +46,8 @@ def read_wcsim_geometry(filename):
 
     Requires WCSimRoot library loaded
     """
-    rootf = ROOT.TFile(expandvars(filename), "read")
+    filename = expandvars(filename)
+    rootf = ROOT.TFile(filename, "read")
 
     tree  = rootf.GetKey("wcsimGeoT").ReadObj()
     tree.GetEvent(0)
@@ -60,6 +62,10 @@ def read_wcsim_geometry(filename):
     df.loc["WCNumPMT"]    = geom.GetWCNumPMT   ()
     df.loc["WCPMTRadius"] = geom.GetWCPMTRadius()
     for i in range(3): df.loc[f"WCOffset{i}"] = geom.GetWCOffset(i)
+
+    with uproot.open(filename) as f:
+        for key in ["WCDetRadius", "WCDetHeight"]:
+            df.loc[key] = 0.1*f[f"Settings/{key}"].array()[0]
 
     # mPMT info
     columns = ["TubeNo", "mPMTNo", "mPMT_PMTNo", "CylLoc"]
