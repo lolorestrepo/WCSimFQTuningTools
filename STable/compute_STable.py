@@ -118,21 +118,23 @@ def main():
         if args.verbose: print(f"Processing file {n}/{len(infiles)}...", basename(filename))
         # read data
         with uproot.open(filename) as f:
-            # contains the following data if the optical photon reaches a PMT
-            # either directly or indirectly
-            # parent pos and dir
-            srcpos = f["sttree/srcpos"].array().to_numpy()
-            srcdir = f["sttree/srcdir"].array().to_numpy()
-            # photon pos and dir
-            #oppos  = f["sttree/oppos"] .array().to_numpy()
-            #opdir  = f["sttree/opdir"] .array().to_numpy()
-            # PMT number/pos
-            ihPMT   = f["sttree/ihPMT"]  .array().to_numpy()
-            tubepos = f["sttree/tubepos"].array().to_numpy()
-            # distance covered? (not needed)
-            deltaL = f["sttree/deltaL"].array().to_numpy()
-            # ISTORY=(# of refl)*1000 + (# of scat); 0 if direct hit
-            isct = f["sttree/isct"].array().to_numpy()
+            try:
+                # contains the following data if the optical photon reaches a PMT
+                # either directly or indirectly
+                # parent pos and dir
+                srcpos = f["sttree/srcpos"].array().to_numpy()
+                srcdir = f["sttree/srcdir"].array().to_numpy()
+                # photon pos and dir
+                #oppos  = f["sttree/oppos"] .array().to_numpy()
+                #opdir  = f["sttree/opdir"] .array().to_numpy()
+                # PMT number/pos
+                ihPMT   = f["sttree/ihPMT"]  .array().to_numpy()
+                tubepos = f["sttree/tubepos"].array().to_numpy()
+                # distance covered? (not needed)
+                deltaL = f["sttree/deltaL"].array().to_numpy()
+                # ISTORY=(# of refl)*1000 + (# of scat); 0 if direct hit
+                isct = f["sttree/isct"].array().to_numpy()
+            except uproot.exceptions.KeyInFileError: continue
 
 
         # Rotate with vertical direction given by vaxis

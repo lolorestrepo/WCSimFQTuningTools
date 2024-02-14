@@ -8,6 +8,7 @@ import multiprocessing
 import concurrent.futures
 import numpy  as np
 import tables as tb
+import psutil
 
 from os.path   import expandvars, join, basename
 
@@ -16,7 +17,7 @@ from STable.STable_tools import split_tubeids, clockwise_azimuth_angle, read_wcs
 
 def process_table(infiles, tabname, bins, tubeids, vaxis, R, verbose):
 
-    if verbose: print(f">> Creating {tabname:6} table...")
+    if verbose: print(f">> Creating {tabname:6} table... Core id {psutil.Process().cpu_num()}")
 
     # Define scattering tables, notice the only change beside name and title is the use of R_PMT (bottom and top) and z_PMT (side)
     h_indirect = np.zeros(shape=tuple(  [len(bins_)-1 for bins_ in bins]))
@@ -24,18 +25,21 @@ def process_table(infiles, tabname, bins, tubeids, vaxis, R, verbose):
 
     # Loop over simulation files in order to fill the table histograms
     for n, filename in enumerate(infiles, 1):
-        if verbose: print(f" {(tabname):7}: Processing file {n}/{len(infiles)}...", basename(filename))
+        if verbose: print(f"  {(tabname):7}: Processing file {n}/{len(infiles)}...", basename(filename))
+
         # read data
         with uproot.open(filename) as f:
-            # photons reaching a PMT either directly or indirectly
-            # parent pos and dir
-            srcpos = f["sttree/srcpos"].array().to_numpy()
-            srcdir = f["sttree/srcdir"].array().to_numpy()
-            # PMT number/pos
-            ihPMT   = f["sttree/ihPMT"]  .array().to_numpy()
-            tubepos = f["sttree/tubepos"].array().to_numpy()
-            # ISTORY=(# of refl)*1000 + (# of scat); 0 if direct hit
-            isct = f["sttree/isct"].array().to_numpy()
+            try:
+                # photons reaching a PMT either directly or indirectly
+                # parent pos and dir
+                srcpos = f["sttree/srcpos"].array().to_numpy()
+                srcdir = f["sttree/srcdir"].array().to_numpy()
+                # PMT number/pos
+                ihPMT   = f["sttree/ihPMT"]  .array().to_numpy()
+                tubepos = f["sttree/tubepos"].array().to_numpy()
+                # ISTORY=(# of refl)*1000 + (# of scat); 0 if direct hit
+                isct = f["sttree/isct"].array().to_numpy()
+            except uproot.exceptions.KeyInFileError: continue
 
         # Rotate with vertical direction given by vaxis
         if vaxis != 2:
@@ -63,13 +67,11 @@ def process_table(infiles, tabname, bins, tubeids, vaxis, R, verbose):
         sel_indirect = (isct != 0)
         # indirect
         sel  = sel_indirect & np.isin(ihPMT, tubeids)
-        h, _ = np.histogramdd( (zs[sel], Rs[sel], phi[sel], zd[sel], theta[sel], pmtpos[sel])
-                                , bins=bins)
+        h, _ = np.histogramdd((zs[sel], Rs[sel], phi[sel], zd[sel], theta[sel], pmtpos[sel]), bins=bins)
         h_indirect += h
         # direct
         sel  = ~sel_indirect & np.isin(ihPMT, tubeids)
-        h, _ = np.histogramdd( (zs[sel], Rs[sel], phi[sel], pmtpos[sel])
-                                , bins=(*bins[:3], bins[-1]))
+        h, _ = np.histogramdd((zs[sel], Rs[sel], phi[sel], pmtpos[sel]), bins=(*bins[:3], bins[-1]))
         h_direct += h
 
     # Add direction axis to direct light histogram
@@ -115,7 +117,6 @@ def main():
     tubeids = split_tubeids(infiles[0], vaxis=args.vaxis)
     tubeids = dict(zip(tabnames, tubeids))
 
-
     # Select rotation matrix based on vertical axis
     if   args.vaxis == 0:
         R = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
@@ -124,8 +125,7 @@ def main():
     elif args.vaxis == 2: pass
     else: raise Exception("Invalid value for vertical axis (vaxis)")
 
-
-    # this lines are commented because these parameter definitions ere misleading in WCSim
+    # get detector length and radius
     df, pmts = read_wcsim_geometry(infiles[0])
     length = df.loc["WCDetHeight", "WC"]/2.
     radius = df.loc["WCDetRadius", "WC"]
@@ -154,7 +154,7 @@ def main():
     theta = [-np.pi, +np.pi]
     bounds = [zs, Rs, phi, zd, theta]
     # define bins
-    bins = 6*[None]
+    bins = 5*[None]
     for dim, nbins in enumerate(args.nbins):
         bins[dim] = np.linspace(bounds[dim][0], bounds[dim][1], nbins+1)
 
@@ -192,23 +192,22 @@ def main():
     # paralellize loop over tables to fill histograms
     results         = dict()
     future_to_table = dict()
-    with multiprocessing.Manager() as manager:
-        lock = manager.Lock()
-        with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
-            for tabname in tabnames:
-                if tabname == "side": bins[5] = zPMTbins
-                else                : bins[5] = RPMTbins
+    if args.verbose: print("Number of cores:", len(os.sched_getaffinity(0)))
+    with concurrent.futures.ProcessPoolExecutor(max_workers=len(os.sched_getaffinity(0))) as executor:
+        for tabname in tabnames:
+            bins_ = bins.copy()
+            if tabname == "side": bins_.append(zPMTbins)
+            else                : bins_.append(RPMTbins)
+            future_to_table[executor.submit(process_table, infiles, tabname, bins_, tubeids[tabname], args.vaxis, R, args.verbose)] = tabname
 
-                future_to_table[executor.submit(process_table, infiles, tabname, bins, tubeids[tabname], args.vaxis, R, args.verbose)] = tabname
-
-            # get results once all the tasks are finished
-            for future in concurrent.futures.as_completed(future_to_table):
-                h_indirect, h_direct = future.result()
-                tabname = future_to_table[future]
-                results[tabname] = (h_indirect, h_direct)
+        # get results once all the tasks are finished
+        for future in concurrent.futures.as_completed(future_to_table):
+            h_indirect, h_direct = future.result()
+            tabname = future_to_table[future]
+            results[tabname] = (h_indirect, h_direct)
 
     for tabname in tabnames:
-        # Save bins and scattering tables
+        # Scattering tables
         if args.verbose: print(f">> Writting {tabname} table...")
 
         h_indirect = results[tabname][0]
