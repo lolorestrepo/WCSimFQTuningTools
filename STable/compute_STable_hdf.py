@@ -180,10 +180,11 @@ def main():
     fout = tb.open_file("scattables.h5", mode="w", title="STable")
     # Write bins to output file
     bins_group = fout.create_group("/", "bins", "binning")
-    for dim, bins_ in enumerate(bins[:-1]):
+    for dim, bins_ in enumerate(bins):
         fout.create_carray(bins_group, f"bins_{dim}", atom, bins_.shape, obj=bins_, filters=filters)
     fout.create_carray(bins_group, "bins_zPMT", atom, zPMTbins.shape, obj=zPMTbins, filters=filters)
     fout.create_carray(bins_group, "bins_RPMT", atom, RPMTbins.shape, obj=RPMTbins, filters=filters)
+    fout.flush()
     # define tables group tables
     tables_group = fout.create_group("/", "tables", "tables")
 
