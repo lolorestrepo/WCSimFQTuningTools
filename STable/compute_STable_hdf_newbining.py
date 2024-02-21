@@ -18,7 +18,8 @@ def read_photon_information(filename):
     rootf = ROOT.TFile(filename)
 
     tree = rootf.Get("sttree")
-    n = tree.GetEntries()
+    try                  : n = tree.GetEntries()
+    except AttributeError: return None
 
     srcpos = np.zeros((n, 3), dtype=np.float32)
     srcdir = np.zeros((n, 3), dtype=np.float32)
@@ -49,7 +50,9 @@ def process_table(infiles, tabname, bins, tubeids, R, mPMTmap, mPMTpositions, mP
         if verbose: print(f"  {(tabname):7}: Processing file {n}/{len(infiles)}...", basename(filename))
 
         # read data
-        srcpos, srcdir, ihPMT, isct = read_photon_information(filename)
+        photon_information = read_photon_information(filename)
+        if photon_information is None: continue
+        srcpos, srcdir, ihPMT, isct = photon_information
 
         # select photons in tubeids
         sel =  np.isin(ihPMT, tubeids)
@@ -132,6 +135,7 @@ def main():
     tubeids = dict(zip(tabnames, tubeids))
 
     # Select rotation matrix based on vertical axis
+    R = None
     if   args.vaxis == 0:
         R = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
     elif args.vaxis == 1:
