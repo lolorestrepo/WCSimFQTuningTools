@@ -37,3 +37,4 @@ compute_STable_hdf = "STable.compute_STable_hdf_newbining:main"
 
 fit_timepdf = "Time.fit_timepdf:main"
 
+get_conversion_distributions = "Conversion.get_conversion_distributions:main"
