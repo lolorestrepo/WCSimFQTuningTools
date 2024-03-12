@@ -26,6 +26,7 @@ def main():
     parser.add_argument(    "--zedge", type=float, nargs="?", help = "histogram edge for vertical (z) dimensions in cm", default=136.95-20.) # default wcte
     parser.add_argument(    "--redge", type=float, nargs="?", help = "histogram edge for radial (r) dimensions in cm"  , default=172.05-20.) # default wcte
     parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path"         , default="$HOME/Software/WCSim/install/lib")
+    parser.add_argument("--maxnfiles", type=int, nargs="?", help = "max files to proccess", default=None)
     
     args = parser.parse_args()
     ##########################################
@@ -37,6 +38,7 @@ def main():
     # get simulation filenames, removing those ending in '_flat.root'
     infiles = glob.glob(join(args.indir[0], "*"))
     infiles = sorted([f for f in infiles if "_flat.root" not in basename(f)])
+    if args.maxnfiles: infiles = infiles[:args.maxnfiles]
 
     # Select rotation matrix based on vertical axis
     vaxis = args.vaxis
