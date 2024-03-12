@@ -10,6 +10,7 @@ import configparser
 import numpy  as np
 import pandas as pd
 import tables as tb
+import concurrent.futures
 
 from itertools import groupby
 from os.path   import expandvars, join, basename, exists
@@ -23,6 +24,150 @@ from fitqun_io.tuning_charge_readers import AngularResponse, ScatteringTables
 from fitqun_io.cprofile              import CProfile
 
 warnings.filterwarnings("ignore", category=tb.NaturalNameWarning)
+
+# define global value of speed of light in vacuum (cm/ns) TODO: import from PyfiTQun
+c0 = 29.9792458
+
+def process_momentum( filenames, outfilename
+                    , pmts, R, radius, length, trigger_offset
+                    , attenuation_length, refraction_index, QE
+                    , cprof, ang, scat
+                    , tresbins, μbins
+                    , max_contained_statistics):
+    
+    X = np.zeros(7)
+    vertex    = np.zeros((1, 3))
+    direction = np.zeros((1, 3))
+    
+    # read momentum from first event (instead of computing it from the energy)
+    rootf = ROOT.TFile(filenames[0])
+    tree  = rootf.GetKey("wcsimT").ReadObj()
+    tree.GetBranch("wcsimrootevent").SetAutoDelete(True)
+    tree.GetEvent(0)
+    trigger = tree.wcsimrootevent.GetTrigger(0)
+    tracks = trigger.GetTracks()
+
+    # find parent track
+    for i in range(tracks.GetEntries()):
+        track = tracks[i]
+        if ((track.GetParenttype()==0)&(track.GetId()==1)): break
+    if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
+        logger.error("No parent track for first event")
+    momentum = track.GetP()
+    rootf.Close()
+
+    if (np.log(momentum)<=cprof.logpbins[0]) | (cprof.logpbins[-1]<=np.log(momentum)):
+        logger.warning(f"Momentum {momentum} out of tuning limits. Skipping.")
+        return 
+
+    # get max travel distance 
+    max_distance = cprof.get_maxdistance(np.log(momentum))
+
+    logger.info(f"Processing momentum {round(momentum, 2)} MeV/c...")
+
+    # define histograms to be filled
+    hdirect   = np.zeros((len(tresbins)-1, len(μbins)-1))
+    hindirect = np.zeros((len(tresbins)-1, len(μbins)-1))
+    contained_counter = 0
+    total_counter     = 0
+    for filename in filenames:
+        rootf = ROOT.TFile(filename)
+        tree  = rootf.GetKey("wcsimT").ReadObj()
+        tree.GetBranch("wcsimrootevent").SetAutoDelete(True)
+        nevents = tree.GetEntries()
+
+        for event_i in range(nevents):
+            tree.GetEvent(event_i)
+            ntriggers = tree.wcsimrootevent.GetNumberOfEvents()
+            
+            trigger = tree.wcsimrootevent.GetTrigger(0) # only trigger 0 is considered
+            tracks = trigger.GetTracks()
+
+            # find parent track
+            for i in range(tracks.GetEntries()):
+                track = tracks[i]
+                if ((track.GetParenttype()==0)&(track.GetId()==1)): break
+
+            if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
+                logger.error(f"No parent track for event index {event_i}")
+                continue
+
+            # get vertex and direction
+            for i in range(3): vertex   [0, i] = track.GetStart(i)
+            for i in range(3): direction[0, i] = track.GetDir  (i)
+            
+            if R is not None:
+                vertex    = np.matmul(R,    vertex.T).T
+                direction = np.matmul(R, direction.T).T
+
+            X[1:4] = vertex
+            X[3]   = np.arccos (direction[:, 2])[0]
+            X[4]   = np.arctan2(direction[:, 1], direction[:, 0])[0]
+            X[6]   = track.GetP()
+            
+            # if is contained, process the event
+            if is_contained(vertex[0], direction[0], max_distance, radius, length):
+                contained_counter += 1
+
+                # get digi hits
+                digihits = trigger.GetCherenkovDigiHits()
+
+                # loop over hits and compute residual times
+                tresidual = np.zeros((trigger.GetNcherenkovdigihits(), 2)) # saves residual time and tubeid
+                midpos = vertex + direction * (max_distance/2.)
+                t      = trigger_offset - trigger.GetHeader().GetDate()
+                for hit_i in range(trigger.GetNcherenkovdigihits()):
+                    
+                    digihit = digihits[hit_i]
+                    tubeid  = digihit.GetTubeId()
+
+                    pmtpos = pmts.loc[tubeid].loc[["x", "y", "z"]].values
+
+                    # save residual time and tubeid
+                    midtrack_pmt_distance = np.linalg.norm(pmtpos - midpos)
+                    tresidual[hit_i, 0] = tubeid
+                    tresidual[hit_i, 1] = digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0
+                
+                # sort by tubeid
+                sorted_indices = np.argsort(tresidual[:, 0])
+                tresidual = tresidual[sorted_indices]
+
+                # compute predicted charges
+                μ_direct, μ_indirect = compute_predicted_charges( X, pmts
+                                                                , ang, cprof, scat
+                                                                , attenuation_length, QE)
+                # select only hitted pmts
+                sel = np.isin(pmts.index, tresidual[:, 0])
+                μ_direct   = μ_direct  [sel]
+                μ_indirect = μ_indirect[sel]
+
+                # fill histograms (add 1e-10 to silence warning)
+                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct + 1e-10), bins=[tresbins, μbins])
+                hdirect += h
+                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_indirect + 1e-10), bins=[tresbins, μbins])
+                hindirect += h
+
+            total_counter += 1
+
+            # check enough statistics
+            if (contained_counter >= max_contained_statistics): break
+
+        # check enough statistics
+        rootf.Close()
+        if (contained_counter >= max_contained_statistics): break
+
+    # Save results
+    logger.info(f"Saving {round(momentum, 2)} MeV/c histograms")
+    with tb.open_file(outfilename, "a") as f:
+        f.create_array(f.root.direct  , f"p_{round(momentum, 3)}", hdirect)
+        f.create_array(f.root.indirect, f"p_{round(momentum, 3)}", hindirect)
+
+        f.root.events.append([(momentum, contained_counter, total_counter)])
+        f.flush()
+
+    return
+
+
 
 def main():
 
@@ -62,13 +207,13 @@ def main():
     for filename in infiles: assert basename(filename).split("_")[1] == particle
 
     # get needed data from configuration file
-    c0                 = 29.9792458 # speed of light in vacuum (cm/ns)
     vaxis              =   int(config["detector"].get("vaxis"))
     attenuation_length = float(config["physics"].get("attenuation_length"))
     refraction_index   = float(config["physics"].get("refraction_index"))
     QE                 = float(config["physics"].get("quantum_efficiency"))
 
     # Select rotation matrix based on vertical axis
+    R = None
     if   vaxis == 0:
         R = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
     elif vaxis == 1:
@@ -125,7 +270,6 @@ def main():
     tresbins = np.linspace(treslow, tresup, ntresbins+1)
     μbins    = np.linspace(   μlow,    μup, nμbins   +1)
 
-
     # get trigger offset
     rootf = ROOT.TFile(infiles[0])
     tree = rootf.GetKey("wcsimRootOptionsT").ReadObj()
@@ -147,134 +291,23 @@ def main():
     ##########################################
     # loop on energies TODO: paralellize
     ##########################################
-    X = np.zeros(7)
-    vertex    = np.zeros((1, 3))
-    direction = np.zeros((1, 3))
     for energy, filenames in zip(energies, grouped_filenames):
-
-        # read momentum from first event (instead of computing it from the energy)
-        rootf = ROOT.TFile(filenames[0])
-        tree  = rootf.GetKey("wcsimT").ReadObj()
-        tree.GetEvent(0)
-        trigger = tree.wcsimrootevent.GetTrigger(0)
-        tracks = trigger.GetTracks()
-        # find parent track
-        for i in range(tracks.GetEntries()):
-            track = tracks[i]
-            if ((track.GetParenttype()==0)&(track.GetId()==1)): break
-        if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
-            logger.error("No parent track for first event")
-        momentum = track.GetP()
-        rootf.Close()
-
-        if (np.log(momentum)<=cprof.logpbins[0]) | (cprof.logpbins[-1]<=np.log(momentum)):
-            logger.warning(f"Momentum {momentum} out of tuning limits. Skipping.")
-            continue
-
-        # get max travel distance 
-        max_distance = cprof.get_maxdistance(np.log(momentum))
-
-        logger.info(f"Processing momentum {round(momentum, 2)} MeV/c...")
-
-        # define histograms to be filled
-        hdirect   = np.zeros((ntresbins, nμbins))
-        hindirect = np.zeros((ntresbins, nμbins))
-        contained_counter = 0
-        total_counter     = 0
-        for filename in filenames:
-            rootf = ROOT.TFile(filename)
-            tree  = rootf.GetKey("wcsimT").ReadObj()
-            nevents = tree.GetEntries()
-
-            for event_i in range(nevents):
-                tree.GetEvent(event_i)
-                ntriggers = tree.wcsimrootevent.GetNumberOfEvents()
-                
-                trigger = tree.wcsimrootevent.GetTrigger(0) # only trigger 0 is considered
-                tracks = trigger.GetTracks()
-
-                # find parent track
-                for i in range(tracks.GetEntries()):
-                    track = tracks[i]
-                    if ((track.GetParenttype()==0)&(track.GetId()==1)): break
-
-                if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
-                    logger.error(f"No parent track for event index {event_i}")
-                    continue
-
-                # get vertex and direction
-                for i in range(3): vertex   [0, i] = track.GetStart(i)
-                for i in range(3): direction[0, i] = track.GetDir  (i)
-                
-                if vaxis != 2:
-                    vertex    = np.matmul(R,    vertex.T).T
-                    direction = np.matmul(R, direction.T).T
-
-                X[1:4] = vertex
-                X[3]   = np.arccos (direction[:, 2])[0]
-                X[4]   = np.arctan2(direction[:, 1], direction[:, 0])[0]
-                X[6]   = track.GetP()
-                
-                # if is contained, process the event
-                if is_contained(vertex[0], direction[0], max_distance, radius, length):
-                    contained_counter += 1
-
-                    # get digi hits
-                    digihits = trigger.GetCherenkovDigiHits()
-
-                    # loop over hits and compute residual times
-                    tresidual = np.zeros((trigger.GetNcherenkovdigihits(), 2)) # saves residual time and tubeid
-                    midpos = vertex + direction * (max_distance/2.)
-                    t      = trigger_offset - trigger.GetHeader().GetDate()
-                    for hit_i in range(trigger.GetNcherenkovdigihits()):
-                        
-                        digihit = digihits[hit_i]
-                        tubeid  = digihit.GetTubeId()
-
-                        pmtpos = pmts.loc[tubeid].loc[["x", "y", "z"]].values
-
-                        # save residual time and tubeid
-                        midtrack_pmt_distance = np.linalg.norm(pmtpos - midpos)
-                        tresidual[hit_i, 0] = tubeid
-                        tresidual[hit_i, 1] = digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0
-                    
-                    # sort by tubeid
-                    sorted_indices = np.argsort(tresidual[:, 0])
-                    tresidual = tresidual[sorted_indices]
-
-                    # compute predicted charges
-                    μ_direct, μ_indirect = compute_predicted_charges( X, pmts
-                                                                    , ang, cprof, scat
-                                                                    , attenuation_length, QE)
-                    # select only hitted pmts
-                    sel = np.isin(pmts.index, tresidual[:, 0])
-                    μ_direct   = μ_direct  [sel]
-                    μ_indirect = μ_indirect[sel]
-
-                    # fill histograms (add 1e-10 to silence warning)
-                    h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct + 1e-10), bins=[tresbins, μbins])
-                    hdirect += h
-                    h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_indirect + 1e-10), bins=[tresbins, μbins])
-                    hindirect += h
-
-                total_counter += 1
-
-                # check enough statistics
-                if (contained_counter >= max_contained_statistics): break
-
-            # check enough statistics
-            rootf.Close()
-            if (contained_counter >= max_contained_statistics): break
-
-        # Save results
-        logger.info(f"Saving {round(momentum, 2)} MeV/c histograms")
-        with tb.open_file(outfilename, "a") as f:
-            f.create_array(f.root.direct  , f"p_{round(momentum, 3)}", hdirect)
-            f.create_array(f.root.indirect, f"p_{round(momentum, 3)}", hindirect)
-
-            f.root.events.append([(momentum, contained_counter, total_counter)])
-            f.flush()
-
+        process_momentum( filenames, outfilename
+                        , pmts, R, radius, length, trigger_offset
+                        , attenuation_length, refraction_index, QE
+                        , cprof, ang, scat
+                        , tresbins, μbins
+                        , max_contained_statistics)
+    
+    # # not working in ccin2p3
+    # with concurrent.futures.ProcessPoolExecutor() as executor:
+    #     for energy, filenames in zip(energies, grouped_filenames):
+    #         executor.submit(process_momentum, filenames, outfilename
+    #                                         , pmts, R, radius, length, trigger_offset
+    #                                         , attenuation_length, refraction_index, QE
+    #                                         , cprof, ang, scat
+    #                                         , tresbins, μbins
+    #                                         , max_contained_statistics)
     return
 
 

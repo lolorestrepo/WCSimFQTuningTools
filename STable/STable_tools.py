@@ -39,7 +39,7 @@ def clockwise_azimuth_angle(v1, v2):
 def read_wcsim_geometry(filename):
 
     """
-    This function reads the geometrical information (in mm)
+    This function reads the geometrical information (in cm)
     from **filename** and returns it in two dataframes.
     The first dataframe contains general information about the detector,
     and the second returns the information for each PMT
@@ -71,18 +71,20 @@ def read_wcsim_geometry(filename):
     columns = ["TubeNo", "mPMTNo", "mPMT_PMTNo", "CylLoc"]
     for i in range(3): columns.append(f"Orientation_x{i}")
     for i in range(3): columns.append(f"Position_x{i}")
-    pmts_df = pd.DataFrame(columns=columns)
+
+    pmts_empty = np.zeros(geom.GetWCNumPMT(), dtype=list(zip(columns, [*4*[int], *6*[float]])))
+    pmts_df = pd.DataFrame(pmts_empty)
 
     for i in range(geom.GetWCNumPMT()):
         pmt = geom.GetPMT(i)
-        pmts_df.loc[i, "TubeNo"]     = pmt.GetTubeNo()
-        pmts_df.loc[i, "mPMTNo"]     = pmt.GetmPMTNo()
-        pmts_df.loc[i, "mPMT_PMTNo"] = pmt.GetmPMT_PMTNo()
-        pmts_df.loc[i, "CylLoc"]     = pmt.GetCylLoc()
+        pmts_df.loc[i, "TubeNo"]     = int(pmt.GetTubeNo())
+        pmts_df.loc[i, "mPMTNo"]     = int(pmt.GetmPMTNo())
+        pmts_df.loc[i, "mPMT_PMTNo"] = int(pmt.GetmPMT_PMTNo())
+        pmts_df.loc[i, "CylLoc"]     = int(pmt.GetCylLoc())
 
         for j in range(3):
-            pmts_df.loc[i, f"Orientation_x{j}"] = pmt.GetOrientation(j)
-            pmts_df.loc[i, f"Position_x{j}"]    = pmt.GetPosition(j)
+            pmts_df.loc[i, f"Orientation_x{j}"] = float(pmt.GetOrientation(j))
+            pmts_df.loc[i, f"Position_x{j}"]    = float(pmt.GetPosition(j))
     
     rootf.Close()
     return (df, pmts_df)
