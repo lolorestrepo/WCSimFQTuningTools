@@ -29,12 +29,18 @@ warnings.filterwarnings("ignore", category=tb.NaturalNameWarning)
 c0 = 29.9792458
 
 def process_momentum( filenames, outfilename
-                    , pmts, R, radius, length, trigger_offset
+                    , pmts, R, radius, length, pmtradius, trigger_offset
                     , attenuation_length, refraction_index, QE
                     , cprof, ang, scat
                     , tresbins, μbins
                     , max_contained_statistics):
     
+    # Create tuning file instances
+    ang   = AngularResponse (ang, pmtradius, attenuation_length)
+    scat  = ScatteringTables(scat)
+    cprof = CProfile        (cprof)
+    
+    # Define empty variables (useful later)
     X = np.zeros(7)
     vertex    = np.zeros((1, 3))
     direction = np.zeros((1, 3))
@@ -195,6 +201,7 @@ def main():
     config = configparser.ConfigParser()
     config.read(args.configfile)
 
+    # group files in energies
     infiles = expandvars(config["in_out"].get("infiles"))
     infiles = glob.glob(infiles)
     infiles = [f for f in infiles if re.match("out_.+_\d+(?:\.\d+)?_\d+.root", basename(f))]
@@ -202,7 +209,7 @@ def main():
     grouped_filenames = [list(group) for key, group in groupby(infiles, key=lambda x: get_energy_and_index(x)[0])]
     energies = [get_energy_and_index(filenames[0])[0] for filenames in grouped_filenames]
 
-    # get particle, assert all files from same particle
+    # get particle type, assert all files contain same particle
     particle = basename(infiles[0]).split("_")[1]
     for filename in infiles: assert basename(filename).split("_")[1] == particle
 
@@ -252,10 +259,10 @@ def main():
     pmts.set_index("tubeid", inplace=True)
 
     # create tuning instances
-    logger.info("Reading charge tuning files...")
-    ang   = AngularResponse (expandvars(config["tuning_files"]["Angular"]), pmtradius, attenuation_length)
-    scat  = ScatteringTables(expandvars(config["tuning_files"]["STable"]))
-    cprof = CProfile        (expandvars(config["tuning_files.cprofiles"][particle]))
+    logger.info("Reading charge tuning file names...")
+    ang   = expandvars(config["tuning_files"]["Angular"])
+    scat  = expandvars(config["tuning_files"]["STable"])
+    cprof = expandvars(config["tuning_files.cprofiles"][particle])
 
     # maximum number of events used in each histogram
     max_contained_statistics = int(config["event_selection"]["max_contained_statistics"])
@@ -289,25 +296,17 @@ def main():
         f.create_earray("/",  "events", shape=(0, 3), atom=tb.Int16Atom(), expectedrows=len(energies))
 
     ##########################################
-    # loop on energies TODO: paralellize
+    # loop on energies (parallelized)
     ##########################################
-    for energy, filenames in zip(energies, grouped_filenames):
-        process_momentum( filenames, outfilename
-                        , pmts, R, radius, length, trigger_offset
-                        , attenuation_length, refraction_index, QE
-                        , cprof, ang, scat
-                        , tresbins, μbins
-                        , max_contained_statistics)
-    
-    # # not working in ccin2p3
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-    #     for energy, filenames in zip(energies, grouped_filenames):
-    #         executor.submit(process_momentum, filenames, outfilename
-    #                                         , pmts, R, radius, length, trigger_offset
-    #                                         , attenuation_length, refraction_index, QE
-    #                                         , cprof, ang, scat
-    #                                         , tresbins, μbins
-    #                                         , max_contained_statistics)
+    logger.info("Launch parallel processes")
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for energy, filenames in zip(energies, grouped_filenames):
+            executor.submit(process_momentum, filenames, outfilename
+                                            , pmts, R, radius, length, pmtradius, trigger_offset
+                                            , attenuation_length, refraction_index, QE
+                                            , cprof, ang, scat
+                                            , tresbins, μbins
+                                            , max_contained_statistics)
     return
 
 
