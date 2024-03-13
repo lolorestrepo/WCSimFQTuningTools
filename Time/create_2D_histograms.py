@@ -148,7 +148,7 @@ def process_momentum( filenames, outfilename
                 μ_indirect = μ_indirect[sel]
 
                 # fill histograms (add 1e-10 to silence warning)
-                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct + 1e-10), bins=[tresbins, μbins])
+                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct  + 1e-10), bins=[tresbins, μbins])
                 hdirect += h
                 h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_indirect + 1e-10), bins=[tresbins, μbins])
                 hindirect += h
@@ -293,7 +293,11 @@ def main():
     with tb.open_file(outfilename, "w") as f:
         f.create_group("/",   "direct",   "direct light histogram")
         f.create_group("/", "indirect", "indirect light histogram")
-        f.create_earray("/",  "events", shape=(0, 3), atom=tb.Int16Atom(), expectedrows=len(energies))
+        f.create_group("/",     "bins", "histogram bins")
+        f.create_array("/bins", "tres", tresbins)
+        f.create_array("/bins",    "μ", μbins)
+
+        f.create_earray("/",  "events", shape=(0, 3), atom=tb.Int64Atom(), expectedrows=len(energies))
 
     ##########################################
     # loop on energies (parallelized)
