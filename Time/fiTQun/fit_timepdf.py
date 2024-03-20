@@ -28,7 +28,7 @@ def indirect_timepdf(t, delta, sig, gamma):
 def main():
 
     ############ Program arguments ############
-    parser = argparse.ArgumentParser( prog        = ""
+    parser = argparse.ArgumentParser( prog        = "fit_timepdf"
                                     , description = ""
                                     , epilog      = """""")
     
@@ -45,8 +45,8 @@ def main():
     # Config variables
     infilename  = args.infile
     min_entries = args.min_entries
-    npars_gauss = args.npars_gauss
-    npars_pars  = args.npars_pars
+    npars_gauss = args.npars_gauss[0]
+    npars_pars  = args.npars_pars [0]
 
     # read file containing 2D histograms for each momentum
     f  = uproot.open(infilename)

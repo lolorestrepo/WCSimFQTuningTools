@@ -147,10 +147,10 @@ def process_momentum( filenames, outfilename
                 μ_direct   = μ_direct  [sel]
                 μ_indirect = μ_indirect[sel]
 
-                # fill histograms (add 1e-10 to silence warning)
-                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct  + 1e-10), bins=[tresbins, μbins])
+                # fill histograms (add 1e-20 to silence warning)
+                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct   + 1.e-20), bins=[tresbins, μbins])
                 hdirect += h
-                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_indirect + 1e-10), bins=[tresbins, μbins])
+                h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_indirect + 1.e-20), bins=[tresbins, μbins])
                 hindirect += h
 
             total_counter += 1

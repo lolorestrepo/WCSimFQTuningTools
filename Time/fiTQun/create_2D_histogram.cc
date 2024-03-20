@@ -64,10 +64,10 @@ int main(int argc, char* argv[]){
   if      (vaxis == 0) { R.RotateY(3.*pi/2.);}
   else if (vaxis == 1) { R.RotateX(pi/2.);}
 
-  // Set PC event statistics (min number of PC events to use, if enough are provided)
-  int pc_limit = 50000;
-  if (argc>6){pc_limit = atoi(argv[6]);}
-  cout << "PC event statistics set to " << pc_limit << endl;
+  // Set contained events statistics (min number of contained events to use, if enough are provided)
+  int contained_limit = 10000;
+  if (argc>6){contained_limit = atoi(argv[6]);}
+  cout << "Contained event statistics set to " << contained_limit << endl;
 
   // Read histogram binning
   if ((7<argc)&(argc<13)){ 
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]){
   // Save momenta, total processed and PC events
   vector<double> momenta;
   vector<double> ntotal;
-  vector<double> npc;
+  vector<double> contained;
   // Save conversion between nphotons and total charge
   vector<double> nphotons;
   vector<double> totalqs;
@@ -262,9 +262,9 @@ int main(int argc, char* argv[]){
     // Loop through each file
     //////////////////////////////////////////
     cout << "Looping through files" << endl;
-    int ntotal_counter = 0;
-    int npc_counter    = 0;
-    double totalq      = 0;
+    int ntotal_counter    = 0;
+    int contained_counter = 0;
+    double totalq         = 0;
     for (const fs::path& path : entry.second) {
 
       char* filename = const_cast<char*> (path.c_str());
@@ -320,6 +320,7 @@ int main(int argc, char* argv[]){
 
         // If the event is PC, isPC = 1
         if (isPC == 0) {
+          contained_counter += 1;
           // Loop through each hit 
           for (int hit = 0; hit < trigger->GetNcherenkovdigihits(); hit++){
             // Get hit
@@ -342,21 +343,21 @@ int main(int argc, char* argv[]){
 
             totalq += true_q_total [pmtid];
           }
+
         }
-        else { npc_counter += 1;}
       }
 
       wc->Close();
 
       // break if statistics enough
-      cout << "# Processed events: " << ntotal_counter - npc_counter << endl;
-      if ((ntotal_counter - npc_counter) >= pc_limit){break;}
+      cout << "# Processed events: " << contained_counter << endl;
+      if (contained_counter >= contained_limit){break;}
     }
 
     // Append number of total and pc events, and mean charge per event
-    ntotal .push_back(ntotal_counter);
-    npc    .push_back(npc_counter);
-    totalqs.push_back(totalq/(ntotal_counter-npc_counter));
+    ntotal   .push_back(ntotal_counter);
+    contained.push_back(contained_counter);
+    totalqs  .push_back(totalq/contained_counter);
 
     // Write timepdf to output file
     cout << "Writing to " << ofilename << std::endl;
@@ -371,16 +372,16 @@ int main(int argc, char* argv[]){
   }
 
   // Define and write graphs for total and PC events, and conversion nphotons-charge
-  TGraph* gntotal = new TGraph(momenta.size(), momenta.data(), ntotal.data());
-  TGraph* gnpc    = new TGraph(momenta.size(), momenta.data(), npc   .data());
-  TGraph* gconv   = new TGraph(nphotons.size(), nphotons.data(), totalqs.data());
-  gntotal->SetName("Total");
-  gnpc   ->SetName("PC");
-  gconv  ->SetName("Conversion");
+  TGraph* gntotal    = new TGraph( momenta.size(),  momenta.data(), ntotal   .data());
+  TGraph* gcontained = new TGraph( momenta.size(),  momenta.data(), contained.data());
+  TGraph* gconv      = new TGraph(nphotons.size(), nphotons.data(),   totalqs.data());
+  gntotal   ->SetName("Total");
+  gcontained->SetName("Contained");
+  gconv     ->SetName("Conversion");
   of = new TFile(ofilename, "UPDATE");
-  gntotal->Write();
-  gnpc   ->Write();
-  gconv  ->Write();
+  gntotal   ->Write();
+  gcontained->Write();
+  gconv     ->Write();
   of->Close();
 
   return 0;

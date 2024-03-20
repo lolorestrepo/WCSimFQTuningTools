@@ -92,18 +92,12 @@ def main():
             norm = np.sum(proj * (tresbins[1:] - tresbins[:-1]))
 
             # do the fit (only if number of entries is enough)
-            if (proj.sum()<min_entries):
-                mean  = np.average(tress, weights=proj)
-                sigma = np.sqrt(np.average((tress - mean)**2., weights=proj))
-                pars  = np.array([mean, sigma])
+            if (proj.sum()<min_entries): pars = [np.nan, np.nan]
             else:
                 try:
                     pars, cov = curve_fit(gaussian, tress, proj/norm, p0=[0, 0.1], method="trf")
-                    if ((pars[0]<tresbins[0])&(tresbins[-1]<pars[0])): raise RuntimeError
-                except RuntimeError: # if RuntimeError means that minimization fails
-                    mean  = np.average(tress, weights=h)
-                    sigma = np.sqrt(np.average((tress - mean)**2., weights=proj))
-                    pars  = np.array([mean, sigma])
+                    if ((pars[0]<tresbins[0])&(tresbins[-1]<pars[0])): pars = [np.nan, np.nan]
+                except RuntimeError: pars = [np.nan, np.nan] # if RuntimeError: minimization fails
                 
             # save result
             hmeans [pi, μi] = pars[0]

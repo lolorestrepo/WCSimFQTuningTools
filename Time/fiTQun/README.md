@@ -25,6 +25,9 @@ To simplify the process, a bash script *compile_create_2D_histogram.sh* is provi
     export FITQUN_ROOT=/path/to/fiTQun/sourcedir/
     ./create_2D_histogram input_file particle_name parameters_file water_refractive_index vertical_axis max-statistics binning_parameters
 
+
+**Very important information:** This script is using some fiTQun utilities, which contains memory leaks. In order to be able to run the script, since the memory consumption will be growing, make sure to use a CPU with memory enough.
+
 **TODO**: Explain the parameters
  - `statistics-limit` uses at least this many no-PC events in the computation
  - `water_refractive_index` should be the same as the fiTQun.WaterRefractiveIndex used in fiTQun
