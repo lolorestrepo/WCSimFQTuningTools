@@ -17,16 +17,12 @@ from os.path   import expandvars, join, basename, exists
 
 from STable.STable_tools import split_tubeids, clockwise_azimuth_angle, read_wcsim_geometry
 
-# TODO: Solve cyclic imports
-from fitqun import logger
+from fitqun.logger                   import logger, c0
 from fitqun_fit.predicted_charges    import compute_predicted_charges, is_contained
 from fitqun_io.tuning_charge_readers import AngularResponse, ScatteringTables
 from fitqun_io.cprofile              import CProfile
 
 warnings.filterwarnings("ignore", category=tb.NaturalNameWarning)
-
-# define global value of speed of light in vacuum (cm/ns) TODO: import from PyfiTQun
-c0 = 29.9792458
 
 def process_momentum( filenames, outfilename
                     , pmts, R, radius, length, pmtradius, trigger_offset
@@ -141,7 +137,9 @@ def process_momentum( filenames, outfilename
                 # compute predicted charges
                 μ_direct, μ_indirect = compute_predicted_charges( X, pmts
                                                                 , ang, cprof, scat
-                                                                , attenuation_length, QE)
+                                                                , attenuation_length
+                                                                , refraction_index, QE)
+                
                 # select only hitted pmts
                 sel = np.isin(pmts.index, tresidual[:, 0])
                 μ_direct   = μ_direct  [sel]
@@ -302,7 +300,7 @@ def main():
     ##########################################
     # loop on energies (parallelized)
     ##########################################
-    logger.info("Launch parallel processes")
+    logger.info("Launching parallel processes")
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for energy, filenames in zip(energies, grouped_filenames):
             executor.submit(process_momentum, filenames, outfilename

@@ -10,5 +10,5 @@ g++ -g -O -fpic -I. -I$ROOTDIR/include -I$FITQUNDIR/../ -I$WCSIMDIR/include/WCSi
 # FITQUN_ROOT is needed by fiTQun, which is called in the script
 export FITQUN_ROOT=$HOME/Software/fiTQun/
 # Run the script
-./create_2D_histogram $LUSTRE/Time/mu-/out mu- WCTE_Parameters.dat 1.38 1 2500 100 -5 5 125 -2. 3.
+./create_2D_histogram $LUSTRE/Time/e-/out e- WCTE_Parameters.dat 1.38 1 2500 100 -5 5 125 -2. 3.
 rm create_2D_histogram
