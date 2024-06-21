@@ -1,0 +1,76 @@
+*****************************************************************************************
+ fiTQun parameters for WCTE 16c 5r version
+*****************************************************************************************
+ < fiTQun.WCSimConfig = nuPRISMBeamTest_16cShort_mPMT >
+ < fiTQun.WCSimPMTType = 3inchPMTR12199_02 >
+
+ < fiTQun.WaterAttenuationLengthWCSim = 6800. >
+
+ Turn off proton fit by default. The Time PDF files for protons haven't been produced yet
+ < fiTQun.DoProton1RFit = 0 >
+ < fiTQun.DoPDK_MuGammaFit = 0 > 
+ Multi-ring parameters not tuned yet
+ < fiTQun.DoMRFit = 0 >
+
+ < fiTQun.PeakThrWCSim = 12.7 >
+
+ < fiTQun.DarkRateWCSim = 0.1 > Lo cambio yo de 0.2 a 0.1 porque es el valor que use para las timepdfs
+
+ < fiTQun.QEEffWCSim = 0.293 > Previous value 0.275, 0.286
+ < fiTQun.QmuConvFactWCSim = 1.0 > 
+
+ < fiTQun.QECorrElectron1RFit = 0.731 >
+ < fiTQun.QECorrMuon1RFit = 0.812 >
+ < fiTQun.QECorrPionPlus1RFit = 0.934 >
+
+ < fiTQun.GainCorrFactWCSim = 1.0 >
+ < fiTQun.QEEffCorrWCSim = 1. >
+
+ Not tuned for now.
+ < fiTQun.PIDCutEPipa0WCSim = 0. >
+ < fiTQun.PIDCutEPipa1WCSim = 0. >
+ 
+ < fiTQun.PIDCutMuPip0WCSim = 0. >
+ < fiTQun.PIDCutMuPip1WCSim = 0. >
+
+ < fiTQun.RCCuta0WCSim = -1. >
+ < fiTQun.RCCuta1WCSim = 0. >
+ < fiTQun.RCCut1Ea0WCSim = 0. >
+ < fiTQun.RCCut1Mua0WCSim = 0. >
+
+ < fiTQun.DoBiasCorrection = 0 > Set to 1 if you want to apply empirical bias corrections to fit results
+ < fiTQun.UseScatteredLight = 1 > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
+ < fiTQun.TotalChargeConstraintWeight = 4 > Weight of the total charge constraint term in the likelihood function.
+ < fiTQun.UseTimeLikelihood = 1 > Set to 1 to use time likelihoods
+
+ < fiTQun.inDirtPDFGamma = 13.0 > Previous 6.55
+ < fiTQun.inDirtPDFSigma = 1.50 > Previous 5.39
+ < fiTQun.inDirtPDFt0 = -1.20 > Previous 9.88
+
+ < fiTQun.vtxPreFitNfitr = 3 >
+ < fiTQun.vtxPreFitSigmar0 = 40. > 
+ < fiTQun.vtxPreFitSigmar1 = 30. > 
+ < fiTQun.vtxPreFitSigmar2 = 25. > 
+ < fiTQun.vtxPreFitSigmar3 = 20. > 
+ < fiTQun.vtxPreFitGrdszVtx = 30. > 
+ < fiTQun.vtxPreFitGrdsztime = 15. >
+
+
+Añadidos por mi
+ < fiTQun.DoElectron1RFit  = 1 >
+ < fiTQun.DoMuon1RFit      = 1 >
+ < fiTQun.DoPionPlus1RFit  = 1 > 
+ < fiTQun.DoProton1RFit    = 0 >
+ < fiTQun.DoPDK_MuGammaFit = 0 >
+
+ < fiTQun.DoPi0Fit    = 0 >
+ < fiTQun.DoPi0Fit2   = 0 >
+ < fiTQun.DoPiPlusFit = 0 > (difference with fiTQun.DoPionPlus1RFit ?)
+ < fiTQun.DoGamma2ElecFit = 0 >
+ < fiTQun.DecayESearch = 0 >
+ 
+ < fiTQun.DoMRFit = 0 >
+ < fiTQun.DoMSFit = 0 >
+
+
+ 

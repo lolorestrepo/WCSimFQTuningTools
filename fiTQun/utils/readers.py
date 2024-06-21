@@ -1,16 +1,6 @@
-import sys
-import os
-import re
-import glob
-import argparse
 import uproot
-import ROOT
 import numpy  as np
 import pandas as pd
-
-from itertools   import groupby
-from os.path     import expandvars, join, basename
-from wcsimreader import utils as wcr
 
 
 def read_time_window_data(filename):
@@ -127,56 +117,3 @@ def read_1Ring_data(filename, pids, event_counter=0):
                 df.loc[len(df)] = (event, peak, pid, pc, mom, t, *pos, theta, phi, Q1R, nll1R, L, Eloss)
     f.close()
     return df
-
-
-
-def main():
-
-    ############ Program arguments ############
-    parser = argparse.ArgumentParser( prog        = "merge_fitqun_results"
-                                    , description = "description"
-                                    , epilog      = "Text at the bottom of help")
-    
-    parser.add_argument("-v", "--verbose", action="store_true")
-
-    parser.add_argument( "indir", type=str, nargs=1, help = "input directory")
-    parser.add_argument("outdir", type=str, nargs=1, help = "output directory")
-    # parser.add_argument("--wcsimlib", type=str, nargs="?", help = "WCSim lib path", default="$HOME/Software/WCSim/install/lib")
-    
-    args = parser.parse_args()
-    ##########################################
-
-    # ROOT.gSystem.AddDynamicPath(expandvars(args.wcsimlib))
-    # ROOT.gSystem.Load          ("libWCSimRoot.dylib" if sys.platform == "darwin" else "libWCSimRoot.so")
-
-    indir  = expandvars(args.indir [0])
-    outdir = expandvars(args.outdir[0])
-    os.makedirs(outdir, exist_ok=True)
-
-    get_momentum_and_index = lambda fname: list(map(float, re.findall(r'\d+(?:\.\d+)?', basename(fname))))[:2]
-    
-    # group files by momentum
-    filenames = glob.glob(join(indir, "*"))
-    momenta   = np.unique([get_momentum_and_index(fname)[0] for fname in filenames])
-    filenames = sorted(filenames, key=get_momentum_and_index)
-    grouped_filenames = [list(group) for key, group in groupby(filenames, key=lambda x: get_momentum_and_index(x)[0])]
-
-    # momentum fit
-    for momentum, filenames in zip(momenta, grouped_filenames):
-        if args.verbose: print("Processing momentum ", momentum)
-        fits = pd.DataFrame()
-        event_counter = 0
-        for filename in filenames:
-            # tw = read_time_window_data(filename)
-            # se = read_subevent_data   (filename)
-            R1 = read_1Ring_data      (filename, pids=[1, 2, 3], event_counter=event_counter)
-            event_counter += len(R1.Event.unique())
-            fits = pd.concat((fits, R1))
-        fits.to_csv(join(outdir, f"fq_{momentum}.csv"), index=False)
-
-    return
-
-
-if __name__ == "__main__":
-    main()
-    

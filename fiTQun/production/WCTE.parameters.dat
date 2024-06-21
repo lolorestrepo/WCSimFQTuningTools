@@ -1,0 +1,80 @@
+*****************************************************************************************
+ fiTQun parameters for WCTE 16c 5r version
+*****************************************************************************************
+
+Configuracion WCSim
+ < fiTQun.WCSimConfig = nuPRISMBeamTest_16cShort_mPMT >
+ < fiTQun.WCSimPMTType = 3inchPMTR12199_02 >
+
+ < fiTQun.WaterAttenuationLengthWCSim = 6800. >
+
+ < fiTQun.PeakThrWCSim = 12.7 >
+
+ < fiTQun.DarkRateWCSim = 0.2 > 
+
+
+Tuning related
+
+ < fiTQun.DoBiasCorrection = 0 > Set to 1 if you want to apply empirical bias corrections to fit results
+ < fiTQun.UseScatteredLight = 1 > Flag for scattered light predicted charges (0:off, 1:6D, 2:3D, 4:6D for 1Rfit 3D otherwise)
+ < fiTQun.TotalChargeConstraintWeight = 4 > Weight of the total charge constraint term in the likelihood function.
+ < fiTQun.UseTimeLikelihood = 1 > Set to 1 to use time likelihoods
+
+ < fiTQun.inDirtPDFGamma = 13.0 >
+ < fiTQun.inDirtPDFSigma = 1.50 >
+ < fiTQun.inDirtPDFt0    = -1.20 >
+
+
+Prefit parameters
+ < fiTQun.vtxPreFitNfitr = 3 >
+ < fiTQun.vtxPreFitSigmar0 = 40. > 
+ < fiTQun.vtxPreFitSigmar1 = 30. > 
+ < fiTQun.vtxPreFitSigmar2 = 25. > 
+ < fiTQun.vtxPreFitSigmar3 = 20. > 
+ < fiTQun.vtxPreFitGrdszVtx = 30. > 
+ < fiTQun.vtxPreFitGrdsztime = 15. >
+
+
+Fits parameters
+ < fiTQun.DoProton1RFit = 0 >
+ < fiTQun.DoPDK_MuGammaFit = 0 >
+
+ < fiTQun.DoElectron1RFit  = 1 >
+ < fiTQun.DoMuon1RFit      = 1 >
+ < fiTQun.DoPionPlus1RFit  = 0 > 
+ < fiTQun.DoProton1RFit    = 0 >
+ < fiTQun.DoPDK_MuGammaFit = 0 >
+
+ < fiTQun.DoPi0Fit    = 0 >
+ < fiTQun.DoPi0Fit2   = 0 >
+ < fiTQun.DoPiPlusFit = 0 >
+ < fiTQun.DoGamma2ElecFit = 0 >
+ < fiTQun.DecayESearch = 0 >
+ 
+ < fiTQun.DoMRFit = 0 >
+ < fiTQun.DoMSFit = 0 >
+
+
+ Conversion factors
+ < fiTQun.QEEffWCSim       = 0.293 >
+ < fiTQun.QmuConvFactWCSim = 1.0 >
+
+ < fiTQun.QECorrElectron1RFit = 0.731 > # 0.731
+ < fiTQun.QECorrMuon1RFit     = 0.8 > # 0.812
+ < fiTQun.QECorrPionPlus1RFit = 0.934 > # 0.934
+
+ < fiTQun.GainCorrFactWCSim = 1.0 >
+ < fiTQun.QEEffCorrWCSim    = 1. >
+
+
+PID parameters
+ < fiTQun.PIDCutEPipa0WCSim = 0. >
+ < fiTQun.PIDCutEPipa1WCSim = 0. >
+ 
+ < fiTQun.PIDCutMuPip0WCSim = 0. >
+ < fiTQun.PIDCutMuPip1WCSim = 0. >
+
+ < fiTQun.RCCuta0WCSim = -1. >
+ < fiTQun.RCCuta1WCSim = 0. >
+ < fiTQun.RCCut1Ea0WCSim = 0. >
+ < fiTQun.RCCut1Mua0WCSim = 0. >
