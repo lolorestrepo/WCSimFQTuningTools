@@ -39,7 +39,7 @@ for vals in Iterators.product(values(config_variables)...)
         # add values to dic
         d["rseed"]          = rseed
         d["subtask"]        = subtask
-        d["out_root_fname"] = replace(out_fname, collect(d)...)
+        d["out_root_fname"] = replace(replace(out_fname, collect(d)...), " " => "_")
 
         # add macvars to dictionary
         for var in setdiff(macvars, collect(keys(d)), ["out_root_fname"])
@@ -48,7 +48,7 @@ for vals in Iterators.product(values(config_variables)...)
         
         # replace variable values into macro and write it
         mac = replace(mactemplate, [Pair("\$" * k, v) for (k,v) in d]...)
-        write(replace(macro_fname, collect(d)...), mac)
+        write(replace(replace(macro_fname, collect(d)...), " " => "_"), mac)
 
         global rseed += 1
     end

@@ -21,3 +21,5 @@
 /DarkRate/SetDarkLow 0
 /DarkRate/SetDarkWindow 4000
 
+/mygen/generator gps
+/gps/ene/type  Mono

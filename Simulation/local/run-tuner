@@ -1,16 +1,17 @@
 #!/bin/bash
 
-source $HOME/Software/Geant4/install/bin/geant4.sh
-source $HOME/Software/ROOT/install/bin/thisroot.sh
+source $THRONG_DIR/Software/Geant4/geant4_v10.3.0/bin/geant4.sh
+source $THRONG_DIR/Software/ROOT/root_v6-28-00-patches/bin/thisroot.sh
 
-export WCSIMDIR=$HOME/Software/HK_Software/WCSim/install-Linux_x86_64-gcc_4.8.5-python_3.10.11/
-export TUNERDIR=$HOME/Software/HK_Software/WCSimFQTuner/install/
+export WCSIMDIR=$HOME/Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13/
+export TUNERDIR=$HOME/Software/WCSimFQTuner/install/
 
 rm -rf out && mkdir -p out
 cp $WCSIMDIR/macros/daq.mac .
 cp $WCSIMDIR/macros/jobOptions.mac .
 cp $WCSIMDIR/macros/tuning_parameters.mac .
 cp $WCSIMDIR/lib/*.pcm .
+cp $WCSIMDIR/data/mPMT_Position_WCTE.txt .
 cp $TUNERDIR/bin/WCSim_FQTuner .
 
 source $WCSIMDIR/setup.sh
@@ -46,4 +47,5 @@ rm geofile_*
 rm daq.mac
 rm jobOptions.mac
 rm tuning_parameters.mac
+rm mPMT_Position_WCTE.txt
 rm *.pcm

@@ -7,4 +7,8 @@
 
 /fqTune/mode cherenkovProfile
 
-/mygen/generator   gun
+/mygen/generator gun
+
+/particle/select mu-
+/particle/process/inactivate 7 # inactivate Decay process
+/particle/process/inactivate 8 # inactivate muMinusCaptureAtRest

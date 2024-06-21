@@ -21,7 +21,11 @@
 /DarkRate/SetDarkLow 0
 /DarkRate/SetDarkWindow 4000
 
+/particle/select mu-
+/particle/process/inactivate 7 # inactivate Decay process
+/particle/process/inactivate 8 # inactivate muMinusCaptureAtRest
+
 /mygen/generator gps
 /gps/ene/type  Mono
 /gps/position  0 0 0 cm
-/gps/direction 1 0 0
+#/gps/direction 1 0 0
