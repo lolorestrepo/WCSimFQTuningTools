@@ -1,3 +1,10 @@
+# Simulation/local
+Simulation/local/*
+!Simulation/local/README.md
+!Simulation/local/run-tuner
+!Simulation/local/vis.mac
+!Simulation/local/visOGLQt.mac
+
 # MacOS
 *DS_Store
 

@@ -5,9 +5,9 @@
 /vis/geometry/set/forceWireframe all -1 true
 
 # white background, black volumes
-/vis/viewer/set/background white
-/vis/geometry/set/colour all -1 0 0 0
-/vis/modeling/trajectories/create/drawByParticleID # draw black cherenkov
+/vis/viewer/set/background black
+/vis/geometry/set/colour all -1 1 1 1
+#/vis/modeling/trajectories/create/drawByParticleID cherenkov # draw black cherenkov
 
 
 /vis/geometry/set/visibility WC              0 false
@@ -22,12 +22,12 @@
 /vis/geometry/set/visibility WCTopCapPolygon 0 false
 /vis/geometry/set/visibility WCBotCapPolygon 0 false
 
-#/vis/geometry/set/visibility InteriorWCPMT 0 true
+/vis/geometry/set/visibility InteriorWCPMT 0 false
 #/vis/geometry/set/visibility WCMultiPMT    0 false
 
-#/vis/geometry/set/forceSolid WCMultiPMT 0 true
-#/vis/geometry/set/colour WCMultiPMT 0 1 0 0 1
+/vis/geometry/set/forceSolid WCMultiPMT 0 false
+/vis/geometry/set/colour WCMultiPMT 0 1 0 0 1
 
-/Tracking/fractionOpticalPhotonsToDraw 1
+/Tracking/fractionOpticalPhotonsToDraw 0.4
 /vis/scene/add/trajectories
-/vis/scene/add/axes 0 0 0 5 m
+#/vis/scene/add/axes 0 0 0 5 m

@@ -10,16 +10,23 @@
 /WCSim/PMT/PositionFile mPMT_Position_WCTE.txt
 /WCSim/Construct
 
-/WCSim/PMTQEMethod Stacking_Only
+/WCSim/PMTQEMethod     SensitiveDetector_Only
+#/WCSim/PMTQEMethod     DoNotApplyQE
 /WCSim/PMTCollEff on
 
 /DAQ/Digitizer SKI
 /DAQ/Trigger NDigits
 /control/execute daq.mac
+
+/DarkRate/SetDetectorElement tank
 /DarkRate/SetDarkMode 1
 /DarkRate/SetDarkHigh 100000
 /DarkRate/SetDarkLow 0
 /DarkRate/SetDarkWindow 4000
+
+/Tracking/saveHitProducingTracks true
+
+/WCSimIO/SaveRooTracker 0
 
 /fqTune/mode killScatterRef
 

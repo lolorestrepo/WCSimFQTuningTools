@@ -1,20 +1,24 @@
 #!/bin/bash
 
-source $THRONG_DIR/Software/Geant4/geant4_v10.3.0/bin/geant4.sh
-source $THRONG_DIR/Software/ROOT/root_v6-28-00-patches/bin/thisroot.sh
+export WCSIMINSTALLDIR=$HOME/HK_Software/WCSim/install-Darwin_arm64-gcc_15.0.0-python_3.10.13/
+export TUNERDIR=$HOME/HK_Software/WCSimFQTuner/install
 
-export WCSIMDIR=$HOME/Software/WCSim/install-Linux_x86_64-gcc_9-python_3.10.13/
-export TUNERDIR=$HOME/Software/WCSimFQTuner/install/
+source $HOME/Software/ROOT/install/bin/thisroot.sh
+source $HOME/Software/Geant4/geant4_v10.5.1/bin/geant4.sh
+source $WCSIMINSTALLDIR/bin/this_wcsim.sh
 
-rm -rf out && mkdir -p out
-cp $WCSIMDIR/macros/daq.mac .
-cp $WCSIMDIR/macros/jobOptions.mac .
-cp $WCSIMDIR/macros/tuning_parameters.mac .
-cp $WCSIMDIR/lib/*.pcm .
-cp $WCSIMDIR/data/mPMT_Position_WCTE.txt .
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=$(geant4-config --prefix)/lib:$DYLD_LIBRARY_PATH
+
+#rm -rf out && mkdir -p out
+mkdir -p data
+cp $WCSIMINSTALLDIR/macros/daq.mac .
+cp $WCSIMINSTALLDIR/macros/jobOptions.mac .
+cp $WCSIMINSTALLDIR/macros/tuning_parameters.mac .
+cp $WCSIMINSTALLDIR/data/mPMT_Position_WCTE.txt data
+cp $WCSIMINSTALLDIR/data/CathodeParameters.txt data
+cp $WCSIMINSTALLDIR/lib/*.pcm .
 cp $TUNERDIR/bin/WCSim_FQTuner .
-
-source $WCSIMDIR/setup.sh
 
 if (($# != 2 && $# != 3)); then
     echo "expected 2 or 3 arguments: macrofile vis/batch nevents"
@@ -29,13 +33,13 @@ if (($# != 2 && $# != 3)); then
 fi
 
 if [ $2 = 'vis' ]; then
-    sed '$a\/control/execute vis.mac' $1 >> temp.mac
-    sed '$a\/run/beamOn 1' temp.mac >> temp.mac
+    gsed '$a\/control/execute vis.mac' $1 >> temp.mac
+    gsed '$a\/run/beamOn 1' temp.mac >> temp.mac
     mv temp.mac WCSim.mac
     ./WCSim_FQTuner
     rm WCSim.mac
 elif [ $2 = 'batch' ]; then
-    sed "\$a\ /run/beamOn $3" $1 >> temp.mac
+    gsed "\$a\ /run/beamOn $3" $1 >> temp.mac
     ./WCSim_FQTuner temp.mac
     rm temp.mac
 else
@@ -47,5 +51,5 @@ rm geofile_*
 rm daq.mac
 rm jobOptions.mac
 rm tuning_parameters.mac
-rm mPMT_Position_WCTE.txt
+rm -rf data
 rm *.pcm
