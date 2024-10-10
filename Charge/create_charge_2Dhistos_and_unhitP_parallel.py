@@ -116,6 +116,9 @@ def main():
 
     results = np.array(results, dtype=[("mu", float), ("Phit", float), ("hq", np.ndarray)])
     results.sort(order="mu")
+
+    print("mu", "Phit")
+    for r in results: print(r[0], r[1])
     
     # get 2D histogram and hit prob.
     Hq   = np.vstack(results["hq"])

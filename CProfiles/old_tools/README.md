@@ -16,7 +16,7 @@
 4) Compile and run **fitcprofile.cc**. Script difficult to understand. Fits each Cherenkov profile, the number of partitions of each fit is hardcoded to 1. Run it through the executable `fitcprofile PID`
 5) Run the **writecprofile.cc** **ROOT** macro. Also difficult to understand. Fits the rest of the variables: the isotropic integrals, the gNphot and gsthr.
 
-### **Comments/Bugs/Unknon behaviours**
+### **Comments/Bugs/Unknown behaviours**
 
 - `hprofinf`
     - the entry number 3 is hardcoded for each particle type

@@ -1,16 +1,16 @@
 //script to normalize the cherenkov profiles and put them into one file
 
-// #include <iostream>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// #include <TH1D.h>
-// #include <TH2D.h>
-// #include <TGraph.h>
-// #include <TFile.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <TGraph.h>
+#include <TFile.h>
 
-// using namespace std;
+using namespace std;
 
 
 int genhist(int PID){//PDG
@@ -24,8 +24,9 @@ int genhist(int PID){//PDG
     // strcat(filename, "cprofile_%dMeV_%d_ccin2p3.root");
     ///////////////
     string fname = getenv("LUSTRE");
-    fname += "/CProfiles/out/";
-    fname += "cprofile_%d.0MeV_%d.root";
+    fname += "/CProfiles/full_e-/out/";
+    // fname += "cprofile_%d.0MeV_%d.root";
+    fname += "out_e-_%d_%d.root";
     const char* filename = fname.c_str();
 
 
@@ -44,17 +45,31 @@ int genhist(int PID){//PDG
     strcpy(cPath,gDirectory->GetPath());
 
     nmom=0;
-    for (imom=0; imom<=1000; imom+=10) {
-        if (wtg[nmom]) delete wtg[nmom]; //????
+    for (imom=0; imom<=5000; imom+=10) {
+
+        if (wtg[nmom]){ 
+            // delete wtg[nmom]; //????
+            wtg[nmom] = nullptr;
+        }
 
         cout << "Mom: " << imom << endl;
         
         nevt=0;
-        j=1;
         
-        cout << Form(filename,imom,j) << endl;
+        // open files 1 and 2 file to check if files for this momentum exist
+        fin = new TFile(Form(filename,imom,1));
+        if (fin->IsZombie()) {
+            delete fin;
+            fin = new TFile(Form(filename,imom,2));
+            if (fin->IsZombie()) {
+                delete fin;
+                continue;
+            }
+        }
 
-        while (1) {
+        for (int j=1; j<100; j++) {
+
+            cout << Form(filename,imom,j) << endl;
 
             // ifstream file(Form(filename,imom,j));
             // if (!file.good()){break;}
@@ -63,7 +78,7 @@ int genhist(int PID){//PDG
             gDirectory->cd(cPath);
             if (fin->IsZombie()) {
                 delete fin;
-                break;
+                continue;
             }
             else if (!wtg[nmom]) {
                 wtg[nmom] = new TH2D(*(TH2D*)fin->Get(Form("%sg",typ)));
@@ -75,7 +90,6 @@ int genhist(int PID){//PDG
             wtgtmp=(TH2D*)fin->Get(Form("%sg",typ));
             wtg[nmom]->Add(wtgtmp);
             delete fin;
-            j++;
         }
         if (!wtg[nmom]) continue;//skip this momentum
 

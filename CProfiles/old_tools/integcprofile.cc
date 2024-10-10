@@ -65,9 +65,9 @@ double DoIntegralIso(TH1D *hrho, int ns)
 
 int main(int argc, char* argv[]){
   
-  int nR0bin=401;
-  int nth0bin=201;
-  double R0max=5000.;
+  int nR0bin=150;
+  int nth0bin=30;
+  double R0max=4000.;
   
   int flgHK=0;
   if (argc>2) {
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
 
   int PID;
   int imom,i,j,k,nmom;
-  const int nmommax=2000;
+  const int nmommax=5000;
   int armom[nmommax];
   Double_t mombEdgs[nmommax+1],R0binEdgs[2001],th0binEdgs[2001];
   double R0,costh0;
