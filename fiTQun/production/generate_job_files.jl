@@ -34,14 +34,15 @@ function main()
     
     parsed_args = parse_commandline()
 
-    tasksdir    = abspath(parsed_args["tasksdir"])
+    tasksdir    = joinpath(abspath(parsed_args["tasksdir"]), "")
     jobtemplate = abspath(parsed_args["job_template"])
     ntasks_pj   =         parsed_args["ntasks_per_job"]
     verbose     =         parsed_args["verbose"]
 
-    jobs_dir = joinpath(dirname(tasksdir), "jobs")
-    logs_dir = joinpath(dirname(tasksdir), "logs")
-    errs_dir = joinpath(dirname(tasksdir), "errs")
+    basedir  = dirname(rstrip(tasksdir, '/'))
+    jobs_dir = joinpath(basedir, "jobs")
+    logs_dir = joinpath(basedir, "logs")
+    errs_dir = joinpath(basedir, "errs")
     mkpath(jobs_dir)
     mkpath(logs_dir)
     mkpath(errs_dir)

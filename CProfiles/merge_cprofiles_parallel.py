@@ -30,14 +30,10 @@ def process_momentum(momentum, files, htype, lock, verbose=False):
             nevents += fin["nevents"].counts()[0]
             h_, _, _ = fin[f"{htype}g"].to_numpy()
             h += h_ # accumulate entries
-            
-    # mean nphotons per momentum
-    nphotons = h.sum()/nevents
 
     # create, fill and save 2D histogram for this momentum
     thbinw = thbins[1] - thbins[0]
     sbinw =   sbins[1] -  sbins[0]
-    h *= (1/h.sum())*(1/(thbinw*sbinw)) # normalize histogram
 
     th2d = ROOT.TH2D( f"g_{momentum}", f"g_{momentum}"
                     , len(thbins)-1, thbins
@@ -49,16 +45,7 @@ def process_momentum(momentum, files, htype, lock, verbose=False):
         fout.WriteObject(th2d, f"g_{momentum}")
         fout.Close()
 
-    # compute s distance at which 90% of photons were emitted
-    # (needed in the parabolic approximation for the angular response)
-    sproj = h.sum(axis=0)*thbinw # projected pdf in s
-    assert len(sproj) == len(sbins) - 1
-
-    scum = np.cumsum(sproj)*sbinw
-    sindex = np.argwhere(scum>0.9).flatten()[0]
-    sthr = (sbins[sindex] + sbins[sindex+1])/2.
-
-    return nphotons, sthr
+    return nevents
 
 
 def main():
@@ -104,30 +91,24 @@ def main():
 
             # get results once all the tasks are finished
             for future in concurrent.futures.as_completed(future_to_momentum):
-                nphotons, sthr = future.result()
+                nevents = future.result()
                 momentum = future_to_momentum[future]
-                results.append((momentum, nphotons, sthr))
+                results.append((momentum, nevents))
 
     # sort by momentum values
-    results = np.array(results, dtype=[("momentum", float), ("nphotons", float), ("sthrs", float)])
+    results = np.array(results, dtype=[("momentum", float), ("nevents", float)])
     results.sort(order="momentum")
 
     # get values
-    momenta  = results["momentum"].copy()
-    nphotons = results["nphotons"].copy()
-    sthrs    = results["sthrs"]   .copy()
+    momenta = results["momentum"].copy()
+    nevents = results["nevents"] .copy()
 
     fout = ROOT.TFile("cprofiles_merged.root", "UPDATE")
 
-    # save mean number of photons per momentum
-    g = ROOT.TGraph(len(momenta), momenta, nphotons)
-    g.SetTitle("Mean number of photons per event")
-    fout.WriteObject(g, "gNphot")
-
-    # save s thresholds
-    g = ROOT.TGraph(len(momenta), momenta, sthrs)
-    g.SetTitle("Length of track")
-    fout.WriteObject(g, "gsthr")
+    # save number of events per momentum
+    g = ROOT.TGraph(len(momenta), momenta, nevents)
+    g.SetTitle("Number of events per momentum")
+    fout.WriteObject(g, "g_nevents")
 
     # close output file
     fout.Close()

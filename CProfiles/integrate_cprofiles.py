@@ -28,14 +28,16 @@ def main():
     parser.add_argument(    "r0max", type=float, nargs=1, help = "in cm")
     parser.add_argument(  "nr0bins", type=int  , nargs=1, help = "")
     parser.add_argument( "nth0bins", type=int  , nargs=1, help = "")
+    parser.add_argument( "--max_relerr", type=float, nargs=1, help = "", default=0.1)
     
     args = parser.parse_args()
     ##########################################
 
     # collect the arguments
-    r0max    = args.r0max   [0]
-    nr0bins  = args.nr0bins [0]
-    nth0bins = args.nth0bins[0]
+    r0max      = args.r0max   [0]
+    nr0bins    = args.nr0bins [0]
+    nth0bins   = args.nth0bins[0]
+    max_relerr = args.max_relerr
 
     # define r0, th0 bining
     r0bins  = np.linspace(0, r0max*nr0bins/(nr0bins-1), nr0bins+1)
@@ -62,13 +64,25 @@ def main():
     # compute integrals as a function of (momentum, r0, th0)
     if args.verbose: print(f"Performing Cherenkov integrals...")
     for mbin, momentum in enumerate(momenta, 1):
-        if args.verbose: print(f"Integrating {momentum} MeV...")
+        if args.verbose: print(f"Integrating {momentum} MeV/c...")
 
         # get cherenkov profile 2D histogram 
         th2d = fin[f"g_{momentum}"]
         g, thbins, sbins = th2d.to_numpy()
-        g = histogram2d_to_func(g, thbins, sbins)
+        g, thbins, sbins = g.copy(), thbins.copy(), sbins.copy()
+        thbinw = thbins[1] - thbins[0]
+        sbinw  =  sbins[1] -  sbins[0]
 
+        with np.errstate(divide='ignore', invalid='ignore'):
+            err = 1./np.sqrt(g)
+            g[err>max_relerr] = 0
+            if g.sum() == 0:
+                if args.verbose: print(f"Warning: Lacking statistics for {momentum} MeV/c...")
+                continue
+            g = histogram2d_to_func(g*(1./g.sum())*(1./(thbinw*sbinw)), thbins, sbins)
+
+        # g = histogram2d_to_func(g, thbins, sbins)
+        
         # values of s for evaluation
         s  = (sbins[1:] + sbins[:-1])/2.
         ds = sbins[1] - sbins[0]
@@ -93,7 +107,9 @@ def main():
 
 
     # compute isotropic integrals as a function of momentum
-    gsthr = []
+    gsthr    = []
+    nphotons = []
+    momenta_, nevents  = fin[f"g_nevents"].values()
     if args.verbose: print(f"Performing Isotropic integrals...")
     for mbin, momentum in enumerate(momenta, 1):
         if args.verbose: print(f"Integrating {momentum} MeV/c...")
@@ -101,6 +117,15 @@ def main():
         # get cherenkov profile 2D histogram 
         th2d = fin[f"g_{momentum}"]
         g, thbins, sbins = th2d.to_numpy()
+        g, thbins, sbins = g.copy(), thbins.copy(), sbins.copy()
+        thbinw = thbins[1] - thbins[0]
+        sbinw =   sbins[1] -  sbins[0]
+
+        # mean number of photons
+        nphotons.append(g.sum() / nevents[(momentum == momenta_)][0])
+
+        # normalize projected distribution
+        g = g*(1./g.sum())*(1./(thbinw*sbinw))
 
         # values of s for evaluation
         s  = (sbins[1:] + sbins[:-1])/2.
@@ -130,9 +155,8 @@ def main():
     # write gsthr
     fout.WriteObject(ROOT.TGraph(len(momenta), momenta, np.array(gsthr)), "gsthr")
 
-    # copy mean number of photons per momentum (gNphot)
-    x, y = fin["gNphot"].values()
-    g = ROOT.TGraph(len(x), x, y)
+    # save mean number of photons per momentum
+    g = ROOT.TGraph(len(momenta), momenta, np.array(nphotons))
     g.SetTitle("Mean number of photons per event")
     fout.WriteObject(g, "gNphot")
 

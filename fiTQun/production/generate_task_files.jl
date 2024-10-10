@@ -36,8 +36,8 @@ function main()
     
     parsed_args = parse_commandline()
 
-    indir         = abspath(parsed_args["indir"])
-    outdir        = abspath(parsed_args["outdir"])
+    indir         = joinpath(abspath(parsed_args["indir"]) , "")
+    outdir        = joinpath(abspath(parsed_args["outdir"]), "")
     parfile       = abspath(parsed_args["parameters"])
     task_template = abspath(parsed_args["task_template"])
     verbose       =         parsed_args["verbose"]

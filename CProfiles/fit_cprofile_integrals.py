@@ -3,6 +3,8 @@ import uproot
 import ROOT
 import numpy  as np
 
+from scipy.optimize import curve_fit, Bounds
+
 
 def histogram2d_to_func(hist, xbins, ybins):
     """
@@ -76,9 +78,9 @@ def compute_goodness_of_fit(xs, ys, parss):
         ysum += np.sum(y)
         n    += len(x)
     ymean = ysum/n
-    for y in ys: Stot += np.sum((y - ymean)**2) 
-    return 1 - Sres/Stot
-
+    for y in ys: Stot += np.sum((y - ymean)**2)
+    if   (Stot == 0.): return 1. # i.e avoid 0/0
+    else             : return 1. - Sres/Stot
 
 
 def main():
@@ -133,6 +135,11 @@ def main():
 
         # fit I_n vs log(p)
         log_momenta = np.log((mbins[1:] + mbins[:-1])/2.)
+
+        # select momenta (only those with values of I, i.e. different from 0)
+        sel_momenta = (h.sum(axis=(0, 1)) > 0.)
+        log_momenta = log_momenta[sel_momenta]
+        h           = h[:,:, sel_momenta]
 
         # loop over r0 and th0 bins
         for th0bin, _ in enumerate(th0bins[:-1], 0):
