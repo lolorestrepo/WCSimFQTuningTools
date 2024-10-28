@@ -94,24 +94,26 @@ def split_tubeids(filename, vaxis=2):
 
     """ 
     This function reads the geometrical information from the file
-    and returns the tubeids for bottom, top and side tubes in this order
+    and returns the tubeids for bottom, top and side tubes in this order.
+
+    CAUTION:
+    This function assumes that the central PMT orientation is perpendicular to the vessel
+    and its internal number in the mPMT module is 1 (ie mPMT_PMTNo == 1).
+
+    This assumption might not be correct in future software versions or detector geometries.
+
+    The ideal implementation would be to perform the splitting using a location flag for each PMT.
     """
     _, pmts_df = read_wcsim_geometry(expandvars(filename))
 
-    # select bottom, top and side pmtids
-    zm = getattr(pmts_df.groupby("mPMTNo"), f"Position_x{vaxis}").mean()
-    mPMT_bottom = zm[zm == zm.min()].index.values
-    mPMT_top    = zm[zm == zm.max()].index.values
+    mPMTids       = pmts_df.mPMTNo.unique()
+    mPMTid_bottom = pmts_df.loc[(pmts_df.mPMT_PMTNo == 1) & (pmts_df.loc[:, f"Orientation_x{vaxis}"] == +1)].mPMTNo.values
+    mPMTid_top    = pmts_df.loc[(pmts_df.mPMT_PMTNo == 1) & (pmts_df.loc[:, f"Orientation_x{vaxis}"] == -1)].mPMTNo.values
+    mPMTid_side   = mPMTids[~np.isin(mPMTids, np.concatenate([mPMTid_bottom, mPMTid_top]))]
 
-    tubeid_bottom = pmts_df[np.isin(pmts_df.mPMTNo, mPMT_bottom)].TubeNo.values
-    tubeid_top    = pmts_df[np.isin(pmts_df.mPMTNo, mPMT_top)]   .TubeNo.values
-
-    # assuming same number of top and bottom mPMTs and same number of PMTs in each module
-    assert len(tubeid_bottom) == len(tubeid_top)
-
-    # side pmts are those not in top or bottom
-    tubeid_side = pmts_df.TubeNo.values
-    tubeid_side = tubeid_side[~(np.isin(tubeid_side, tubeid_bottom) | np.isin(tubeid_side, tubeid_top))]
+    tubeid_bottom = pmts_df.set_index("mPMTNo").loc[mPMTid_bottom].TubeNo.values
+    tubeid_top    = pmts_df.set_index("mPMTNo").loc[mPMTid_top   ].TubeNo.values
+    tubeid_side   = pmts_df.set_index("mPMTNo").loc[mPMTid_side  ].TubeNo.values
 
     assert len(tubeid_side) + len(tubeid_bottom) + len(tubeid_top) == len(pmts_df)
 

@@ -79,9 +79,8 @@ def main():
             if g.sum() == 0:
                 if args.verbose: print(f"Warning: Lacking statistics for {momentum} MeV/c...")
                 continue
+            # normalize the 2D cherenkov profile
             g = histogram2d_to_func(g*(1./g.sum())*(1./(thbinw*sbinw)), thbins, sbins)
-
-        # g = histogram2d_to_func(g, thbins, sbins)
         
         # values of s for evaluation
         s  = (sbins[1:] + sbins[:-1])/2.

@@ -17,10 +17,11 @@ from os.path   import expandvars, join, basename, exists
 
 from STable.STable_tools import split_tubeids, clockwise_azimuth_angle, read_wcsim_geometry
 
-from fitqun.logger                   import logger, c0
+from fitqun.logger                   import get_logger, c0
 from fitqun_fit.predicted_charges    import compute_predicted_charges, is_contained
-from fitqun_io.tuning_charge_readers import AngularResponse, ScatteringTables
-from fitqun_io.cprofile              import CProfile
+from fitqun_io.tuning_charge_readers import CProfile, AngularResponse, ScatteringTables
+
+logger = get_logger(__name__)
 
 warnings.filterwarnings("ignore", category=tb.NaturalNameWarning)
 
@@ -182,6 +183,7 @@ def main():
     
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("--wcsimlib", type=str, nargs=1, help = "WCSim lib path")
+    parser.add_argument("-i", "--infiles", type=str, nargs="+", help = "Defines the input files", required=True)
     parser.add_argument("configfile", type=str, nargs=1, help = "configuration parameters")
 
     args = parser.parse_args()
@@ -200,9 +202,7 @@ def main():
     config.read(args.configfile)
 
     # group files in energies
-    infiles = expandvars(config["in_out"].get("infiles"))
-    infiles = glob.glob(infiles)
-    infiles = [f for f in infiles if re.match("out_.+_\d+(?:\.\d+)?_\d+.root", basename(f))]
+    infiles = [f for f in args.infiles if re.match("out_.+_\d+(?:\.\d+)?_\d+.root", basename(f))]
     infiles = sorted(infiles, key=get_energy_and_index)
     grouped_filenames = [list(group) for key, group in groupby(infiles, key=lambda x: get_energy_and_index(x)[0])]
     energies = [get_energy_and_index(filenames[0])[0] for filenames in grouped_filenames]

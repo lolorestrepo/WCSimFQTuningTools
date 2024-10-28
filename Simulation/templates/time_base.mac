@@ -22,7 +22,7 @@
 /DarkRate/SetDarkMode 1
 /DarkRate/SetDarkHigh 100000
 /DarkRate/SetDarkLow 0
-/DarkRate/SetDarkWindow 4000
+/DarkRate/SetDarkWindow 20
 
 /Tracking/saveHitProducingTracks true
 
