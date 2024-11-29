@@ -129,7 +129,7 @@ def main():
     if args.verbose: print("==> 2) polynomial fits for each momentum finished")
 
 
-    # Second loop in momenta: Polynomial fits, for each p
+    # Polynomial fits p vs fit parameters
     if args.verbose: print("3) Performing polynomial fits for each parameter...")
     tpdfpars = [ ROOT.TH2D("htpdfparmn", "Time pdf mean fit parameters" , npars_gauss, 0, npars_gauss, npars_pars, 0, npars_pars)
                , ROOT.TH2D("htpdfparsg", "Time pdf sigma fit parameters", npars_gauss, 0, npars_gauss, npars_pars, 0, npars_pars)]

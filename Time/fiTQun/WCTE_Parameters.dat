@@ -7,8 +7,8 @@ WCSim related parameters
  < fiTQun.WCSimPMTType = 3inchPMTR12199_02 >
  < fiTQun.WaterAttenuationLengthWCSim = 6800. > Attenuation Lenght used in T(R) factor
  < fiTQun.PeakThrWCSim      = 12.7 > (?)
- < fiTQun.DarkRateWCSim     = 0.2  > 
- < fiTQun.QEEffWCSim        = 0.293 >
+ < fiTQun.DarkRateWCSim     = 0.0000001  > 
+ < fiTQun.QEEffWCSim        = 1.0 >
  < fiTQun.QEEffCorrWCSim    = 1.0  > (?)
  < fiTQun.QmuConvFactWCSim  = 1.0  > (?)
  < fiTQun.GainCorrFactWCSim = 1.0  > (?)
@@ -26,7 +26,7 @@ WCSim not tuned parameters.
 
 Which fits? (what is upstream fit?)
  < fiTQun.DoElectron1RFit  = 1 >
- < fiTQun.DoMuon1RFit      = 1 >
+ < fiTQun.DoMuon1RFit      = 0 >
  < fiTQun.DoPionPlus1RFit  = 0 > 
  < fiTQun.DoProton1RFit    = 0 >
  < fiTQun.DoPDK_MuGammaFit = 0 >

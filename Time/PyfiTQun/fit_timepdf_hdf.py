@@ -36,7 +36,8 @@ def main():
     parser.add_argument(  "--infile",   type=str, nargs="?", help = "time 2D file", default="tpdf_histograms.h5")
 
     parser.add_argument( "--min_entries", type=int, nargs="?", help = "min number of entries", default=100)
-    parser.add_argument("npars_gauss", type=int, nargs=1, help = "number of parameters")
+    parser.add_argument("npars_gauss", type=int, nargs=1, help = "gaussian fits")
+    parser.add_argument("npars_pars" , type=int, nargs=1, help = "parameter fits")
     
     args = parser.parse_args()
     ##########################################
@@ -45,6 +46,7 @@ def main():
     infilename  = args.infile
     min_entries = args.min_entries
     npars_gauss = args.npars_gauss[0]
+    npars_pars  = args.npars_pars [0]
 
     # read momentum values and define momentum bins
     with tb.open_file(infilename) as f:
@@ -69,6 +71,7 @@ def main():
         f.create_group("/", "gaussian_fits")
         f.create_group("/", "polynomial_fits")
         f.create_group("/", "bins")
+        f.create_group("/", "parameter_fits")
         f.create_array("/bins", "momentum", pbins)
         f.create_array("/bins",     "tres", tresbins)
         f.create_array("/bins",        "μ", μbins)
@@ -118,11 +121,9 @@ def main():
         for pi, p in enumerate(momenta):
             # get parameter (mean or sigma)
             gausspar = h[pi, :]
-
             # polynomial fit
             sel = ~np.isnan(gausspar)
             pars = np.flip(np.polyfit(μs[sel], gausspar[sel], npars_gauss-1))
-
             # save values
             hpars[i][pi] = pars
 
@@ -130,7 +131,36 @@ def main():
     with tb.open_file(outfilename, "a") as f:
         f.create_array("/polynomial_fits",  "means", hpars[0])
         f.create_array("/polynomial_fits", "sigmas", hpars[1])
-    if args.verbose: print("==> 2) polynomial fits for each momentum finished")
+    if args.verbose:
+        print("==> 2) polynomial fits for each momentum finished")
+
+
+    # Polynomial fits p vs fit parameters
+    if args.verbose:
+        print("3) Performing polynomial fits for each parameter...")
+
+    for i, parname in enumerate(["means", "sigmas"]):
+        parameters = np.zeros((npars_gauss, npars_pars))
+        for pari in range(npars_gauss):
+            npars = npars_pars + 1
+            while npars>2:
+                npars -= 1
+                if npars < 2:
+                    raise Exception("Cannot perform 3) polynomial fits for each momentum")
+                try:
+                    pars = np.flip(np.polyfit(momenta, hpars[i][:, pari], npars - 1))
+                    break
+                except np.RankWarning:
+                    continue
+            parameters[pari, :npars] = pars
+
+        # save parameters to output file
+        with tb.open_file(outfilename, "a") as f:
+            f.create_array("/parameter_fits", parname, parameters)
+
+    if args.verbose:
+        print("==> 3) polynomial fits for each parameter finished")
+
 
     # save input file direct light 2D histograms as 3D histogram
     # TODO: normalize
@@ -167,8 +197,13 @@ def main():
     pdf = np.zeros(len(tresbins)-1)
     for tpdf in timepdfs: pdf += tpdf
     norm = np.sum(pdf*(tresbins[1:]-tresbins[:-1]))
-    pdf  = pdf/norm
-    pars, cov = curve_fit(indirect_timepdf, tress, pdf)
+
+    try:
+        pdf  = pdf/norm
+        pars, cov = curve_fit(indirect_timepdf, tress, pdf)
+    except:
+        warnings.warn("Indirect pdf fit didn't succed, setting parameters to zero value")
+        pars = np.zeros(3)
     
     # save indirect pdf parameters
     with tb.open_file(outfilename, "a") as f:

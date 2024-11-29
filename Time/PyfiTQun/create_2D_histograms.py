@@ -31,17 +31,17 @@ def process_momentum( filenames, outfilename
                     , cprof, ang, scat
                     , tresbins, μbins
                     , max_contained_statistics):
-    
+
     # Create tuning file instances
     ang   = AngularResponse (ang, pmtradius, attenuation_length)
     scat  = ScatteringTables(scat)
     cprof = CProfile        (cprof)
-    
+
     # Define empty variables (useful later)
-    X = np.zeros(7)
+    x = np.zeros(7)
     vertex    = np.zeros((1, 3))
     direction = np.zeros((1, 3))
-    
+
     # read momentum from first event (instead of computing it from the energy)
     rootf = ROOT.TFile(filenames[0])
     tree  = rootf.GetKey("wcsimT").ReadObj()
@@ -53,7 +53,8 @@ def process_momentum( filenames, outfilename
     # find parent track
     for i in range(tracks.GetEntries()):
         track = tracks[i]
-        if ((track.GetParenttype()==0)&(track.GetId()==1)): break
+        if (track.GetParenttype()==0)&(track.GetId()==1):
+            break
     if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
         logger.error("No parent track for first event")
     momentum = track.GetP()
@@ -61,9 +62,9 @@ def process_momentum( filenames, outfilename
 
     if (np.log(momentum)<=cprof.logpbins[0]) | (cprof.logpbins[-1]<=np.log(momentum)):
         logger.warning(f"Momentum {momentum} out of tuning limits. Skipping.")
-        return 
+        return
 
-    # get max travel distance 
+    # get max travel distance
     max_distance = cprof.get_maxdistance(np.log(momentum))
 
     logger.info(f"Processing momentum {round(momentum, 2)} MeV/c...")
@@ -74,40 +75,46 @@ def process_momentum( filenames, outfilename
     contained_counter = 0
     total_counter     = 0
     for filename in filenames:
+
+        logger.info("Processing %s", basename(filename))
+
         rootf = ROOT.TFile(filename)
         tree  = rootf.GetKey("wcsimT").ReadObj()
         tree.GetBranch("wcsimrootevent").SetAutoDelete(True)
         nevents = tree.GetEntries()
 
         for event_i in range(nevents):
+
             tree.GetEvent(event_i)
             ntriggers = tree.wcsimrootevent.GetNumberOfEvents()
-            
+
             trigger = tree.wcsimrootevent.GetTrigger(0) # only trigger 0 is considered
             tracks = trigger.GetTracks()
 
             # find parent track
             for i in range(tracks.GetEntries()):
                 track = tracks[i]
-                if ((track.GetParenttype()==0)&(track.GetId()==1)): break
+                if ((track.GetParenttype()==0)&(track.GetId()==1)):
+                    break
 
             if ((track.GetParenttype()!=0) or (track.GetId()!=1)):
                 logger.error(f"No parent track for event index {event_i}")
                 continue
 
             # get vertex and direction
-            for i in range(3): vertex   [0, i] = track.GetStart(i)
-            for i in range(3): direction[0, i] = track.GetDir  (i)
-            
+            for i in range(3):
+                vertex   [0, i] = track.GetStart(i)
+                direction[0, i] = track.GetDir  (i)
+
             if R is not None:
                 vertex    = np.matmul(R,    vertex.T).T
                 direction = np.matmul(R, direction.T).T
 
-            X[1:4] = vertex
-            X[3]   = np.arccos (direction[:, 2])[0]
-            X[4]   = np.arctan2(direction[:, 1], direction[:, 0])[0]
-            X[6]   = track.GetP()
-            
+            x[1:4] = vertex
+            x[4]   = np.arccos (direction[:, 2])[0]
+            x[5]   = np.arctan2(direction[:, 1], direction[:, 0])[0]
+            x[6]   = track.GetP()
+
             # if is contained, process the event
             if is_contained(vertex[0], direction[0], max_distance, radius, length):
                 contained_counter += 1
@@ -116,7 +123,8 @@ def process_momentum( filenames, outfilename
                 digihits = trigger.GetCherenkovDigiHits()
 
                 # loop over hits and compute residual times
-                tresidual = np.zeros((trigger.GetNcherenkovdigihits(), 2)) # saves residual time and tubeid
+                # tresidual = np.zeros((trigger.GetNcherenkovdigihits(), 2)) # saves residual time and tubeid
+                tresidual = []
                 midpos = vertex + direction * (max_distance/2.)
                 t      = trigger_offset - trigger.GetHeader().GetDate()
                 for hit_i in range(trigger.GetNcherenkovdigihits()):
@@ -124,19 +132,30 @@ def process_momentum( filenames, outfilename
                     digihit = digihits[hit_i]
                     tubeid  = digihit.GetTubeId()
 
+                    if tubeid not in pmts.index.values:
+                        continue
+
                     pmtpos = pmts.loc[tubeid].loc[["x", "y", "z"]].values
 
                     # save residual time and tubeid
                     midtrack_pmt_distance = np.linalg.norm(pmtpos - midpos)
-                    tresidual[hit_i, 0] = tubeid
-                    tresidual[hit_i, 1] = digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0
-                
+                    # tresidual[hit_i, 0] = tubeid
+                    # tresidual[hit_i, 1] = digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0
+                    tresidual.append([ tubeid
+                                     , digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0])
+                    
+                    logger.info("%i pmtid=%i tres=%f ", event_i, tubeid, tresidual[-1][1])
+                    break
+
                 # sort by tubeid
+                if len(tresidual) == 0:
+                    continue
+                tresidual = np.array(tresidual)
                 sorted_indices = np.argsort(tresidual[:, 0])
                 tresidual = tresidual[sorted_indices]
 
                 # compute predicted charges
-                μ_direct, μ_indirect = compute_predicted_charges( X, pmts
+                μ_direct, μ_indirect = compute_predicted_charges( x, pmts
                                                                 , ang, cprof, scat
                                                                 , attenuation_length
                                                                 , refraction_index, QE)
@@ -145,6 +164,8 @@ def process_momentum( filenames, outfilename
                 sel = np.isin(pmts.index, tresidual[:, 0])
                 μ_direct   = μ_direct  [sel]
                 μ_indirect = μ_indirect[sel]
+
+                logger.info("mu=%f ", μ_direct)
 
                 # fill histograms (add 1e-20 to silence warning)
                 h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct   + 1.e-20), bins=[tresbins, μbins])
@@ -182,9 +203,11 @@ def main():
                                     , epilog      = """ """)
     
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("--wcsimlib", type=str, nargs=1, help = "WCSim lib path")
-    parser.add_argument("-i", "--infiles", type=str, nargs="+", help = "Defines the input files", required=True)
-    parser.add_argument("configfile", type=str, nargs=1, help = "configuration parameters")
+    parser.add_argument("--wcsimlib"        , type=str,  nargs=1  , help = "WCSim lib path")
+    parser.add_argument("-i", "--infiles"   , type=str,  nargs="+", help = "Defines the input files"     , required=True)
+    parser.add_argument("-o", "--outdir"    , type=str            , help = "Defines the output directory", required=True)
+    parser.add_argument("-c", "--configfile", type=str, nargs=None, help = "configuration parameters"    , required=True)
+    parser.add_argument("-n", "--max-contained-statistics", type=int, default=float("inf"), help = "Number of events to process")
 
     args = parser.parse_args()
     ##########################################
@@ -197,9 +220,16 @@ def main():
     get_energy_and_index = lambda fname: list(map(float, re.findall(r'\d+(?:\.\d+)?', basename(fname))[:2]))
 
     # read configuration file and get parameters
+    if not exists(args.configfile):
+        logger.critical("Missing config file")
     logger.info("Reading parameters from configuration file")
     config = configparser.ConfigParser()
     config.read(args.configfile)
+
+    # define output filename
+    outfilename = join(expandvars(args.outdir), "tpdf_histograms.h5")
+    # maximum number of contained events used for each histogram
+    max_contained_statistics = args.max_contained_statistics
 
     # group files in energies
     infiles = [f for f in args.infiles if re.match("out_.+_\d+(?:\.\d+)?_\d+.root", basename(f))]
@@ -209,7 +239,8 @@ def main():
 
     # get particle type, assert all files contain same particle
     particle = basename(infiles[0]).split("_")[1]
-    for filename in infiles: assert basename(filename).split("_")[1] == particle
+    for filename in infiles: 
+        assert basename(filename).split("_")[1] == particle
 
     # get needed data from configuration file
     vaxis              =   int(config["detector"].get("vaxis"))
@@ -234,6 +265,8 @@ def main():
     pmts.rename({"Orientation_x0": "ox", "Orientation_x1": "oy", "Orientation_x2": "oz"}, axis=1, inplace=True)
     pmts.rename({"TubeNo": "tubeid", "mPMTNo": "mPMTid", "mPMT_PMTNo": "mPMT_tubeid"}, axis=1, inplace=True)
     pmts.sort_values(by="tubeid", inplace=True)
+    # select only central PMTs
+    pmts = pmts.loc[pmts.mPMT_tubeid == 1]
 
     pmtradius = float(df.loc["WCPMTRadius", "WC"])
     radius    = float(df.loc["WCDetRadius", "WC"])
@@ -262,9 +295,6 @@ def main():
     scat  = expandvars(config["tuning_files"]["STable"])
     cprof = expandvars(config["tuning_files.cprofiles"][particle])
 
-    # maximum number of events used in each histogram
-    max_contained_statistics = int(config["event_selection"]["max_contained_statistics"])
-    
     # define 2D histogram bins
     ntresbins = int  (config["histogram_bins"]["ntresbins"])
     nμbins    = int  (config["histogram_bins"]["nμbins"])
@@ -282,11 +312,10 @@ def main():
     options = tree.wcsimrootoptions
     trigger_offset = options.GetTriggerOffset()
     rootf.Close()
-    
+
     logger.info(f"Got trigger offset {trigger_offset} ns")
 
-    # define output file and create groups for direct and indirect pdfs
-    outfilename = join(expandvars(config["in_out"]["outdir"]), "tpdf_histograms.h5")
+    # create groups for direct and indirect pdfs
     logger.info(f"Creating output file in running directory: {basename(outfilename)}")
     with tb.open_file(outfilename, "w") as f:
         f.create_group("/",   "direct",   "direct light histogram")
@@ -302,13 +331,15 @@ def main():
     ##########################################
     logger.info("Launching parallel processes")
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        for energy, filenames in zip(energies, grouped_filenames):
+        for _, filenames in zip(energies, grouped_filenames):
             executor.submit(process_momentum, filenames, outfilename
                                             , pmts, R, radius, length, pmtradius, trigger_offset
                                             , attenuation_length, refraction_index, QE
                                             , cprof, ang, scat
                                             , tresbins, μbins
                                             , max_contained_statistics)
+
+    logger.info("Processing completed succesfully")
     return
 
 

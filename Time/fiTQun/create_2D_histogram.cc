@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
   else if (vaxis == 1) { R.RotateX(pi/2.);}
 
   // Set contained events statistics (min number of contained events to use, if enough are provided)
-  int contained_limit = 10000;
+  int contained_limit = 1000000000;
   if (argc>6){contained_limit = atoi(argv[6]);}
   cout << "Contained event statistics set to " << contained_limit << endl;
 
@@ -116,6 +116,10 @@ int main(int argc, char* argv[]){
       if (std::regex_search(filename, match, filename_pattern)){
         energy = std::stod(match[1]);
         index  = std::stoi(match[2]);
+
+        if (energy != 100){continue;}
+        if (index != 1){continue;}
+
         // Fill "grouped_filenames"
         if (grouped_filenames.find(energy) == grouped_filenames.end()) { 
           grouped_filenames[energy] = std::vector<fs::path>{full_filename};
@@ -291,7 +295,7 @@ int main(int argc, char* argv[]){
 
         // Get parent track parameters (vertex, angles and momentum)
         // Get initial position (vertex) and direction
-        double track_params[7];
+        double track_params[7+1];
         TVector3 vertex   (trigger->GetVtx(0), trigger->GetVtx(1), trigger->GetVtx(2));
         TVector3 direction(track  ->GetDir(0), track  ->GetDir(1), track  ->GetDir(2));
         // Rotate vertex and direction if needed
@@ -307,6 +311,7 @@ int main(int argc, char* argv[]){
         track_params[4] =  acos(direction.Z());
         track_params[5] = atan2(direction.Y(), direction.X());
         track_params[6] = track->GetP();
+        track_params[7] = 0.; // conversion distance
         
         // Get the predicted charge at each pmt and the PC flag
         // Direct
@@ -326,6 +331,9 @@ int main(int argc, char* argv[]){
             // Get hit
             WCSimRootCherenkovDigiHit* digi_hit = dynamic_cast<WCSimRootCherenkovDigiHit*>(trigger->GetCherenkovDigiHits()->At(hit));
 
+            // Select only central PMTs
+            if (digi_hit->GetmPMT_PMTId() != 1){continue;}
+
             // Get PMT position and rotate it if needed
             int pmtid = digi_hit->GetTubeId()-1;
             WCSimRootPMT pmt = geometry->GetPMT(pmtid);
@@ -342,8 +350,10 @@ int main(int argc, char* argv[]){
             hindirect->Fill(t_residual, log10(true_q_total [pmtid] - true_q_direct[pmtid]));
 
             totalq += true_q_total [pmtid];
-          }
 
+            cout << event << " pmtid= " << pmtid << " tres= " << t_residual << " mu= " << true_q_direct[pmtid]<< std::endl;
+            break;
+          }
         }
       }
 
