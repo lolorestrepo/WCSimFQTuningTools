@@ -1,15 +1,19 @@
+"""
+    create_charge_2Dhistos_and_unhitP_parallel.py
+"""
 import sys
 import re
 import glob
 import argparse
 import itertools
+import concurrent.futures
+
+from os      import cpu_count
+from os.path import expandvars, join, basename, exists
+
 import ROOT
 import numpy  as np
 from scipy.optimize import curve_fit
-
-import concurrent.futures
-from os.path   import expandvars, join, basename, exists
-
 
 def get_DigiHitQs_and_nHits(filename):
     """Get DigiHit charges and number of hits for each PMT and event in the root file"""
@@ -45,22 +49,22 @@ def get_nPMTs(filename):
 
 def process_mu(mu, files, qbins, nPMTs, verbose=False):
     """Get q distribution and hit prob. for list of files (which are supposed to have same mu value)"""
-    if verbose: print(f"--> Processing mu = {mu}".ljust(50))
+    if verbose: 
+        print(f"--> Processing mu = {mu}".ljust(50))
 
     Qs = []
     nHits = []
     for filename in files:
-        # if verbose: print("-> ", basename(filename))
         Qs_, nHits_ = get_DigiHitQs_and_nHits(filename)
         Qs.extend(Qs_)
         nHits.extend(nHits_)
-        # if verbose: print("<- ", basename(filename))
 
     Qs = np.array(Qs)
     Phit = np.mean(nHits) / nPMTs
     hq, _ = np.histogram(Qs, bins=qbins, density=True)
 
-    if verbose: print(f"<-- Done for mu = {mu}".ljust(50))
+    if verbose: 
+        print(f"<-- Done for mu = {mu}".ljust(50))
     return mu, Phit, hq
 
 
@@ -70,12 +74,12 @@ def main():
     parser = argparse.ArgumentParser( prog        = "create 2D histos and unhitP"
                                     , description = "Compute 2D histogram (predicted vs measured charge) and predicted Q vs unhitP"
                                     , epilog      = """""")
-    
+
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument( "indir", type=str, nargs=1, help = "directory containing input files")
+    parser.add_argument(   "indir", type=str, nargs=1, help = "directory containing input files")
     parser.add_argument( "--qbins", type=str, nargs=1, help = "qbins file", default="qbins_wcte.txt")
-    parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path", default="$HOME/Software/WCSim/install/lib")
-    
+    parser.add_argument( "--wcsimlib",   type=str, nargs="?", help = "WCSim lib path")
+
     args = parser.parse_args()
     ##########################################
 
@@ -104,7 +108,7 @@ def main():
     qbins = np.loadtxt(args.qbins[0])
     # loop over mu and fill histograms for each one
     results = []
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         # parallelize
         future_to_mu = {executor.submit(process_mu, mu, files, qbins, nPMTs, args.verbose): mu for mu, files in zip(mus, groups)}
 
@@ -117,9 +121,6 @@ def main():
     results = np.array(results, dtype=[("mu", float), ("Phit", float), ("hq", np.ndarray)])
     results.sort(order="mu")
 
-    print("mu", "Phit")
-    for r in results: print(r[0], r[1])
-    
     # get 2D histogram and hit prob.
     Hq   = np.vstack(results["hq"])
     Phit = results["Phit"]
@@ -132,16 +133,17 @@ def main():
     mubins = (mus[:-1] + mus[1:])/2.
     mubins = np.insert(mubins,           0, mus[0]  - (mubins[0]  - mus[0]))
     mubins = np.insert(mubins, len(mubins), mus[-1] - (mubins[-1] - mus[-1]))
-    
+
     # define and fill histogram
-    th2d = ROOT.TH2D( f"charge2D", f"charge2D"
+    th2d = ROOT.TH2D( "charge2D", "charge2D"
                     , len(mubins)-1, mubins
                     , len(qbins) -1, qbins)
-    for ix, iy in itertools.product(range(1, len(mubins)), range(1, len(qbins))): th2d.SetBinContent(ix, iy, Hq[ix-1, iy-1])
+    for ix, iy in itertools.product(range(1, len(mubins)), range(1, len(qbins))):
+        th2d.SetBinContent(ix, iy, Hq[ix-1, iy-1])
 
     # save to file
-    fout.WriteObject(th2d, f"charge2D")
-    
+    fout.WriteObject(th2d, "charge2D")
+
     # Save UnHit probability, values and fit result
     tgraph = ROOT.TGraph(len(mus), mus, 1.-Phit)
     fout.WriteObject(tgraph, "PUnhit")
@@ -150,16 +152,17 @@ def main():
     # define function to fit
     def PUnhit_func(x, a1, a2, a3):
         return (1. + a1*x + a2*x**2 + a3*x**3)*np.exp(-x)
-    
+
     # perform fit
     popt, _ = curve_fit(PUnhit_func, mus, 1.-Phit, bounds=(0, [np.inf, np.inf, np.inf]))
-    
+
     # Save fit parameters
     th1d = ROOT.TH1D("hPunhitPar", "c_n for P(unhit|#mu)", 10, 0.5, 10.5)
-    for i, par in enumerate(popt, 1): th1d.SetBinContent(i, par)
+    for i, par in enumerate(popt, 1):
+        th1d.SetBinContent(i, par)
     fout.WriteObject(th1d, "hPunhitPar")
 
-    return 
+    return
 
 
 if __name__ == "__main__":
