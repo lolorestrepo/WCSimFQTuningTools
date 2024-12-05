@@ -1,14 +1,14 @@
 #!/bin/bash
 
-export WCSIMINSTALLDIR=$HOME/HK_Software/WCSim/install-Darwin_arm64-gcc_15.0.0-python_3.10.13/
-export TUNERDIR=$HOME/HK_Software/WCSimFQTuner/install
+export WCSIMINSTALLDIR=$HOME/Software/WCSim/install-Linux_x86_64-gcc_13.2.0-python_3.10.13/
+export TUNERDIR=$HOME/Software/WCSimFQTuner/install
 
-source $HOME/Software/ROOT/install/bin/thisroot.sh
-source $HOME/Software/Geant4/geant4_v10.5.1/bin/geant4.sh
+source $THRONG_DIR/Software/ROOT/root_v6-28-00/bin/thisroot.sh
+source $THRONG_DIR/Software/Geant4/geant4_v10.5.1/bin/geant4.sh
 source $WCSIMINSTALLDIR/bin/this_wcsim.sh
 
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=$(geant4-config --prefix)/lib:$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$(geant4-config --prefix)/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$THRONG_DIR/Software/HepMC3/install/lib64/
 
 #rm -rf out && mkdir -p out
 mkdir -p data
@@ -33,13 +33,13 @@ if (($# != 2 && $# != 3)); then
 fi
 
 if [ $2 = 'vis' ]; then
-    gsed '$a\/control/execute vis.mac' $1 >> temp.mac
-    gsed '$a\/run/beamOn 1' temp.mac >> temp.mac
+    sed '$a\/control/execute vis.mac' $1 >> temp.mac
+    sed '$a\/run/beamOn 1' temp.mac >> temp.mac
     mv temp.mac WCSim.mac
     ./WCSim_FQTuner
     rm WCSim.mac
 elif [ $2 = 'batch' ]; then
-    gsed "\$a\ /run/beamOn $3" $1 >> temp.mac
+    sed "\$a\ /run/beamOn $3" $1 >> temp.mac
     ./WCSim_FQTuner temp.mac
     rm temp.mac
 else

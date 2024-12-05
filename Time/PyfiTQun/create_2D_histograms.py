@@ -143,9 +143,6 @@ def process_momentum( filenames, outfilename
                     # tresidual[hit_i, 1] = digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0
                     tresidual.append([ tubeid
                                      , digihit.GetT() - t - (max_distance/2.)/c0 - midtrack_pmt_distance*refraction_index/c0])
-                    
-                    logger.info("%i pmtid=%i tres=%f ", event_i, tubeid, tresidual[-1][1])
-                    break
 
                 # sort by tubeid
                 if len(tresidual) == 0:
@@ -164,8 +161,6 @@ def process_momentum( filenames, outfilename
                 sel = np.isin(pmts.index, tresidual[:, 0])
                 μ_direct   = μ_direct  [sel]
                 μ_indirect = μ_indirect[sel]
-
-                logger.info("mu=%f ", μ_direct)
 
                 # fill histograms (add 1e-20 to silence warning)
                 h, _, _ = np.histogram2d(tresidual[:, 1], np.log10(μ_direct   + 1.e-20), bins=[tresbins, μbins])

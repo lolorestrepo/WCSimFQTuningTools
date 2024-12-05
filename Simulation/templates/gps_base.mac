@@ -11,7 +11,7 @@
 /WCSim/Construct
 
 /WCSim/PMTQEMethod     SensitiveDetector_Only
-#/WCSim/PMTQEMethod     DoNotApplyQE
+#/WCSim/PMTQEMethod    DoNotApplyQE
 /WCSim/PMTCollEff on
 
 /DAQ/Digitizer SKI
@@ -22,7 +22,7 @@
 /DarkRate/SetDarkMode 1
 /DarkRate/SetDarkHigh 100000
 /DarkRate/SetDarkLow 0
-/DarkRate/SetDarkWindow 4000
+/DarkRate/SetDarkWindow 20
 
 /particle/select mu-
 /particle/process/inactivate 7 # inactivate Decay process
@@ -31,7 +31,9 @@
 
 /WCSimIO/SaveRooTracker 0
 
+/fqTune/mode killScatterRef
+
 /mygen/generator gps
 /gps/ene/type  Mono
 /gps/position  0 0 0 cm
-#/gps/direction 1 0 0
+/gps/ang/type  iso

@@ -116,10 +116,6 @@ int main(int argc, char* argv[]){
       if (std::regex_search(filename, match, filename_pattern)){
         energy = std::stod(match[1]);
         index  = std::stoi(match[2]);
-
-        if (energy != 100){continue;}
-        if (index != 1){continue;}
-
         // Fill "grouped_filenames"
         if (grouped_filenames.find(energy) == grouped_filenames.end()) { 
           grouped_filenames[energy] = std::vector<fs::path>{full_filename};
@@ -351,8 +347,8 @@ int main(int argc, char* argv[]){
 
             totalq += true_q_total [pmtid];
 
-            cout << event << " pmtid= " << pmtid << " tres= " << t_residual << " mu= " << true_q_direct[pmtid]<< std::endl;
-            break;
+            // cout << event << " pmtid= " << pmtid << " tres= " << t_residual << " mu= " << true_q_direct[pmtid]<< std::endl;
+            // break;
           }
         }
       }
